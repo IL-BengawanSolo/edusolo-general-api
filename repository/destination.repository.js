@@ -8,14 +8,22 @@ const Destination = {
     return rows;
   },
 
-  async findById(id) {
-    const [rows] = await db.query(`SELECT * FROM ${table} WHERE id = ?`, [id]);
+  // async findById(id) {
+  //   const [rows] = await db.query(`SELECT * FROM ${table} WHERE id = ?`, [id]);
+  //   return rows[0];
+  // },
+
+  async findBySlug(slug) {
+    const [rows] = await db.query(`SELECT * FROM ${table} WHERE slug = ?`, [
+      slug,
+    ]);
     return rows[0];
   },
 
   async create(data) {
     const {
-      uuid, // already generated from service
+      uuid,
+      slug,
       name,
       address,
       region_id,
@@ -36,10 +44,11 @@ const Destination = {
 
     const [result] = await db.query(
       `INSERT INTO ${table} 
-      (uuid, name, address, region_id, latitude, longitude, place_type, description, opening_hours, ticket_price_info, ticket_price_min, ticket_price_max, activities, facilities, review_count, average_rating, website_url)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (uuid, slug, name, address, region_id, latitude, longitude, place_type, description, opening_hours, ticket_price_info, ticket_price_min, ticket_price_max, activities, facilities, review_count, average_rating, website_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         uuid,
+        slug,
         name,
         address,
         region_id,

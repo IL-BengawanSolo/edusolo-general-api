@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import slugify from "slugify";
 import DestinationRepository from "../repository/destination.repository.js";
 
 /**
@@ -16,9 +17,20 @@ export const getDestinationById = async (id) => {
 };
 
 /**
+ * Service for getting a destination by slug
+ */
+
+export const getDestinationBySlug = async (slug) => {
+  return await DestinationRepository.findBySlug(slug);
+};
+
+/**
  * Service for creating a new destination
  */
 export const createDestination = async (data) => {
   const uuid = uuidv4();
-  return await DestinationRepository.create({ uuid, ...data });
+  let baseSlug = slugify(data.name, { lower: true, strict: true });
+  let slug = `${baseSlug}-${uuid.slice(0, 6)}`;
+  
+  return await DestinationRepository.create({ ...data, uuid, slug });
 };

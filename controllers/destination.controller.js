@@ -2,6 +2,7 @@ import {
   getAllDestinations as getAllDestinationsService,
   getDestinationById as getDestinationByIdService,
   createDestination as createDestinationService,
+  getDestinationBySlug as getDestinationBySlugService,
 } from "../services/destination.service.js";
 
 /**
@@ -50,9 +51,34 @@ export const getDestinationById = async (req, res) => {
 };
 
 /**
+ * Get destination by slug
+ */
+export const getDestinationBySlug = async (req, res) => {
+  const { slug } = req.params;
+  try {
+    const destination = await getDestinationBySlugService(slug);
+    if (!destination) {
+      return res.status(404).json({
+        success: false,
+        message: "Destination not found",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      data: destination,
+    });
+  } catch (error) {
+    console.error("Error fetching destination:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+/**
  * Create a new destination
  */
-
 export const createDestination = async (req, res) => {
   try {
     const newDestination = await createDestinationService(req.body);
@@ -67,5 +93,4 @@ export const createDestination = async (req, res) => {
       message: "Internal server error",
     });
   }
-}
-;
+};

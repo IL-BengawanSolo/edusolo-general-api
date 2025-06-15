@@ -1,15 +1,19 @@
 import { Router } from "express";
 import {
   getAllDestinations,
-  getDestinationById,
+  // getDestinationById,
+  getDestinationBySlug,
   createDestination,
+
 } from "../controllers/destination.controller.js";
 
 const destinationRouter = Router();
 
 destinationRouter.get("/", getAllDestinations);
 
-destinationRouter.get("/:id", getDestinationById);
+// destinationRouter.get("/:id", getDestinationById);
+
+destinationRouter.get("/:slug", getDestinationBySlug);
 
 destinationRouter.post("/", createDestination);
 
