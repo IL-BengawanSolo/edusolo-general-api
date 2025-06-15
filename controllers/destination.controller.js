@@ -1,28 +1,30 @@
 import {
-  getAllDestinations as getAllDestinationsService,
+  // getAllDestinations as getAllDestinationsService,
   getDestinationById as getDestinationByIdService,
   createDestination as createDestinationService,
   getDestinationBySlug as getDestinationBySlugService,
+  createDestinationBulk as createDestinationBulkService,
+  getAllDestinationsWithRelations as getAllDestinationsWithRelationsService,
 } from "../services/destination.service.js";
 
 /**
  * Get all destinations
  */
-export const getAllDestinations = async (req, res) => {
-  try {
-    const destinations = await getAllDestinationsService();
-    return res.status(200).json({
-      success: true,
-      data: destinations,
-    });
-  } catch (error) {
-    console.error("Error fetching destinations:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
+// export const getAllDestinations = async (req, res) => {
+//   try {
+//     const destinations = await getAllDestinationsService();
+//     return res.status(200).json({
+//       success: true,
+//       data: destinations,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching destinations:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
 
 /**
  * Get destination by ID
@@ -77,6 +79,26 @@ export const getDestinationBySlug = async (req, res) => {
 };
 
 /**
+ * Get all destinations with relations
+ */
+
+export const getAllDestinationsWithRelations = async (req, res) => {
+  try {
+    const destinations = await getAllDestinationsWithRelationsService();
+    return res.status(200).json({
+      success: true,
+      data: destinations,
+    });
+  } catch (error) {
+    console.error("Error fetching destinations with relations:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+/**
  * Create a new destination
  */
 export const createDestination = async (req, res) => {
@@ -88,6 +110,26 @@ export const createDestination = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating destination:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+/**
+ * Create multiple destinations in bulk
+ */
+
+export const createDestinationBulk = async (req, res) => {
+  try {
+    const result = await createDestinationBulkService(req.body);
+    return res.status(201).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error creating destinations:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",

@@ -13,6 +13,36 @@ const Destination = {
   //   return rows[0];
   // },
 
+  async findAllWithRelations() {
+    const [rows] = await db.query(`
+    SELECT 
+      tp.slug,
+      tp.name,
+      tp.address,
+      tp.latitude,
+      tp.longitude,
+      tp.place_type,
+      tp.ticket_price_min,
+      tp.ticket_price_max,
+      r.name AS region_name,
+      GROUP_CONCAT(DISTINCT c.name) AS categories,
+      GROUP_CONCAT(DISTINCT ac.name) AS age_categories
+    FROM tourist_places tp
+    LEFT JOIN regions r ON tp.region_id = r.id
+    LEFT JOIN tourist_place_categories tpc ON tp.id = tpc.place_id
+    LEFT JOIN categories c ON tpc.category_id = c.id
+    LEFT JOIN tourist_place_age_categories tpac ON tp.id = tpac.place_id
+    LEFT JOIN age_categories ac ON tpac.age_category_id = ac.id
+    GROUP BY tp.id
+  `);
+    // Optionally, split categories and age_categories into arrays
+    return rows.map((row) => ({
+      ...row,
+      categories: row.categories ? row.categories.split(",") : [],
+      age_categories: row.age_categories ? row.age_categories.split(",") : [],
+    }));
+  },
+
   async findBySlug(slug) {
     const [rows] = await db.query(`SELECT * FROM ${table} WHERE slug = ?`, [
       slug,
@@ -68,6 +98,39 @@ const Destination = {
       ]
     );
     return { id: result.insertId, ...data };
+  },
+
+  async createBulk(destinations) {
+    if (!Array.isArray(destinations) || destinations.length === 0) return [];
+
+    const values = destinations.map((data) => [
+      data.uuid,
+      data.slug,
+      data.name,
+      data.address,
+      data.region_id,
+      data.latitude,
+      data.longitude,
+      data.place_type,
+      data.description,
+      JSON.stringify(data.opening_hours),
+      JSON.stringify(data.ticket_price_info),
+      data.ticket_price_min,
+      data.ticket_price_max,
+      JSON.stringify(data.activities),
+      JSON.stringify(data.facilities),
+      data.review_count || 0,
+      data.average_rating || 0,
+      data.website_url,
+    ]);
+
+    const [result] = await db.query(
+      `INSERT INTO ${table} 
+    (uuid, slug, name, address, region_id, latitude, longitude, place_type, description, opening_hours, ticket_price_info, ticket_price_min, ticket_price_max, activities, facilities, review_count, average_rating, website_url)
+    VALUES ?`,
+      [values]
+    );
+    return { inserted: result.affectedRows };
   },
 };
 

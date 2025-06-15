@@ -5,9 +5,9 @@ import DestinationRepository from "../repository/destination.repository.js";
 /**
  * Service for getting all destinations
  */
-export const getAllDestinations = async () => {
-  return await DestinationRepository.findAll();
-};
+// export const getAllDestinations = async () => {
+//   return await DestinationRepository.findAll();
+// };
 
 /**
  * Service for getting a destination by ID
@@ -24,6 +24,14 @@ export const getDestinationBySlug = async (slug) => {
   return await DestinationRepository.findBySlug(slug);
 };
 
+/** 
+ * Service for getting all destinations with relations
+*/
+
+export const getAllDestinationsWithRelations = async () => {
+  return await DestinationRepository.findAllWithRelations();
+}
+
 /**
  * Service for creating a new destination
  */
@@ -31,6 +39,19 @@ export const createDestination = async (data) => {
   const uuid = uuidv4();
   let baseSlug = slugify(data.name, { lower: true, strict: true });
   let slug = `${baseSlug}-${uuid.slice(0, 6)}`;
-  
+
   return await DestinationRepository.create({ ...data, uuid, slug });
+};
+
+/**
+ * Service for creating multiple destinations in bulk
+ */
+export const createDestinationBulk = async (dataArray) => {
+  const destinations = dataArray.map((data) => {
+    const uuid = uuidv4();
+    let baseSlug = slugify(data.name, { lower: true, strict: true });
+    let slug = `${baseSlug}-${uuid.slice(0, 6)}`;
+    return { ...data, uuid, slug };
+  });
+  return await DestinationRepository.createBulk(destinations);
 };
