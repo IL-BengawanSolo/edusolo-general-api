@@ -2,6 +2,17 @@ import { v4 as uuidv4 } from "uuid";
 import slugify from "slugify";
 import DestinationRepository from "../repository/destination.repository.js";
 
+function splitCommaString(str) {
+  if (Array.isArray(str)) return str;
+  if (typeof str === "string") {
+    return str
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 /**
  * Service for getting all destinations
  */
@@ -21,16 +32,31 @@ export const getDestinationById = async (id) => {
  */
 
 export const getDestinationBySlug = async (slug) => {
-  return await DestinationRepository.findBySlug(slug);
+  const row = await DestinationRepository.findBySlug(slug);
+  if (!row) return null;
+  return {
+    ...row,
+    categories: splitCommaString(row.categories),
+    age_categories: splitCommaString(row.age_categories),
+    activities: splitCommaString(row.activities),
+    facilities: splitCommaString(row.facilities),
+  };
 };
 
-/** 
+/**
  * Service for getting all destinations with relations
-*/
+ */
 
 export const getAllDestinationsWithRelations = async () => {
-  return await DestinationRepository.findAllWithRelations();
-}
+  const rows = await DestinationRepository.findAllWithRelations();
+  return rows.map((row) => ({
+    ...row,
+    categories: splitCommaString(row.categories),
+    age_categories: splitCommaString(row.age_categories),
+    activities: splitCommaString(row.activities),
+    facilities: splitCommaString(row.facilities),
+  }));
+};
 
 /**
  * Service for creating a new destination
