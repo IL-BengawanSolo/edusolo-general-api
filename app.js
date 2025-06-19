@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
+import categoryRouter from "./routes/category.routes.js";
 
 const app = express();
 
@@ -14,9 +15,8 @@ app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 app.use(cookieParser());
 app.use(bodyParser.json({ limit: "1mb" }));
 
-
-
 app.use("/api/v1/destinations", destinationRouter);
+app.use("/api/v1/categories", categoryRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -24,6 +24,4 @@ app.get("/", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);
-
-
 });

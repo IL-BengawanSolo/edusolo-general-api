@@ -1,5 +1,4 @@
 import {
-  // getAllDestinations as getAllDestinationsService,
   getDestinationById as getDestinationByIdService,
   createDestination as createDestinationService,
   getDestinationBySlug as getDestinationBySlugService,
@@ -7,28 +6,6 @@ import {
   getAllDestinationsWithRelations as getAllDestinationsWithRelationsService,
 } from "../services/destination.service.js";
 
-/**
- * Get all destinations
- */
-// export const getAllDestinations = async (req, res) => {
-//   try {
-//     const destinations = await getAllDestinationsService();
-//     return res.status(200).json({
-//       success: true,
-//       data: destinations,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching destinations:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal server error",
-//     });
-//   }
-// };
-
-/**
- * Get destination by ID
- */
 export const getDestinationById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -52,9 +29,6 @@ export const getDestinationById = async (req, res) => {
   }
 };
 
-/**
- * Get destination by slug
- */
 export const getDestinationBySlug = async (req, res) => {
   const { slug } = req.params;
   try {
@@ -78,10 +52,6 @@ export const getDestinationBySlug = async (req, res) => {
   }
 };
 
-/**
- * Get all destinations with relations
- */
-
 export const getAllDestinationsWithRelations = async (req, res) => {
   try {
     const destinations = await getAllDestinationsWithRelationsService();
@@ -98,9 +68,6 @@ export const getAllDestinationsWithRelations = async (req, res) => {
   }
 };
 
-/**
- * Create a new destination
- */
 export const createDestination = async (req, res) => {
   try {
     const newDestination = await createDestinationService(req.body);
@@ -116,10 +83,6 @@ export const createDestination = async (req, res) => {
     });
   }
 };
-
-/**
- * Create multiple destinations in bulk
- */
 
 export const createDestinationBulk = async (req, res) => {
   try {
