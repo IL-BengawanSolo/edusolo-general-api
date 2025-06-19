@@ -92,3 +92,7 @@ export const createDestinationBulk = async (dataArray) => {
   });
   return await DestinationRepository.createBulk(destinations);
 };
+
+export const searchAndFilterDestinations = async (params) => {
+  return await DestinationRepository.searchAndFilter(params);
+};

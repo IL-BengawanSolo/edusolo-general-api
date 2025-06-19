@@ -4,6 +4,7 @@ import {
   getDestinationBySlug as getDestinationBySlugService,
   createDestinationBulk as createDestinationBulkService,
   getAllDestinationsWithRelations as getAllDestinationsWithRelationsService,
+  searchAndFilterDestinations as searchAndFilterDestinationsService,
 } from "../services/destination.service.js";
 
 export const getDestinationById = async (req, res) => {
@@ -97,5 +98,22 @@ export const createDestinationBulk = async (req, res) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+
+export const searchAndFilter = async (req, res) => {
+  try {
+    const { search, region_id, category_id, place_type_id } = req.query;
+    const results = await searchAndFilterDestinationsService({
+      search,
+      region_id,
+      category_id,
+      place_type_id,
+    });
+    res.json({ success: true, data: results });
+  } catch (error) {
+    console.error("Error searching destinations:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

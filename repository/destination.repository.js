@@ -187,6 +187,61 @@ const Destination = {
     );
     return { inserted: result.affectedRows };
   },
+
+  async searchAndFilter({
+    search,
+    region_id,
+    category_id,
+    place_type_id,
+    age_category_id,
+  }) {
+    let sql = `
+    SELECT tp.*, r.name AS region_name
+    FROM tourist_places tp
+    LEFT JOIN regions r ON tp.region_id = r.id
+    WHERE 1=1
+  `;
+    const params = [];
+
+    if (search) {
+      sql += " AND tp.name LIKE ?";
+      params.push(`%${search}%`);
+    }
+    if (region_id) {
+      sql += " AND tp.region_id = ?";
+      params.push(region_id);
+    }
+    if (category_id) {
+      sql += `
+      AND EXISTS (
+        SELECT 1 FROM tourist_place_categories tpc
+        WHERE tpc.place_id = tp.id AND tpc.category_id = ?
+      )
+    `;
+      params.push(category_id);
+    }
+    if (place_type_id) {
+      sql += `
+      AND EXISTS (
+        SELECT 1 FROM tourist_place_types tpt
+        WHERE tpt.place_id = tp.id AND tpt.place_type_id = ?
+      )
+    `;
+      params.push(place_type_id);
+    }
+    if (age_category_id) {
+      sql += `
+      AND EXISTS (
+        SELECT 1 FROM tourist_place_age_categories tpac
+        WHERE tpac.place_id = tp.id AND tpac.age_category_id = ?
+      )
+    `;
+      params.push(age_category_id);
+    }
+
+    const [rows] = await db.query(sql, params);
+    return rows;
+  },
 };
 
 export default Destination;
