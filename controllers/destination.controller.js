@@ -1,34 +1,9 @@
 import {
-  getDestinationById as getDestinationByIdService,
-  createDestination as createDestinationService,
   getDestinationBySlug as getDestinationBySlugService,
   createDestinationBulk as createDestinationBulkService,
-  getAllDestinationsWithRelations as getAllDestinationsWithRelationsService,
+  getAllDestinations as getAllDestinationsService,
   searchAndFilterDestinations as searchAndFilterDestinationsService,
 } from "../services/destination.service.js";
-
-export const getDestinationById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const destination = await getDestinationByIdService(id);
-    if (!destination) {
-      return res.status(404).json({
-        success: false,
-        message: "Destination not found",
-      });
-    }
-    return res.status(200).json({
-      success: true,
-      data: destination,
-    });
-  } catch (error) {
-    console.error("Error fetching destination:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
 
 export const getDestinationBySlug = async (req, res) => {
   const { slug } = req.params;
@@ -53,31 +28,15 @@ export const getDestinationBySlug = async (req, res) => {
   }
 };
 
-export const getAllDestinationsWithRelations = async (req, res) => {
+export const getAllDestinations = async (req, res) => {
   try {
-    const destinations = await getAllDestinationsWithRelationsService();
+    const destinations = await getAllDestinationsService();
     return res.status(200).json({
       success: true,
       data: destinations,
     });
   } catch (error) {
     console.error("Error fetching destinations with relations:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-export const createDestination = async (req, res) => {
-  try {
-    const newDestination = await createDestinationService(req.body);
-    return res.status(201).json({
-      success: true,
-      data: newDestination,
-    });
-  } catch (error) {
-    console.error("Error creating destination:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",

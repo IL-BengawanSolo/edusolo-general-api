@@ -45,10 +45,6 @@ function splitCommaString(str) {
   return [];
 }
 
-export const getDestinationById = async (id) => {
-  return await DestinationRepository.findById(id);
-};
-
 export const getDestinationBySlug = async (slug) => {
   const row = await DestinationRepository.findBySlug(slug);
   if (!row) return null;
@@ -63,8 +59,8 @@ export const getDestinationBySlug = async (slug) => {
   };
 };
 
-export const getAllDestinationsWithRelations = async () => {
-  const rows = await DestinationRepository.findAllWithRelations();
+export const getAllDestinations = async () => {
+  const rows = await DestinationRepository.findAll();
   return rows.map((row) => ({
     ...row,
     place_types: splitCommaString(row.place_types),
@@ -73,14 +69,6 @@ export const getAllDestinationsWithRelations = async () => {
     activities: splitCommaString(row.activities),
     facilities: splitCommaString(row.facilities),
   }));
-};
-
-export const createDestination = async (data) => {
-  const uuid = uuidv4();
-  let baseSlug = slugify(data.name, { lower: true, strict: true });
-  let slug = `${baseSlug}-${uuid.slice(0, 6)}`;
-
-  return await DestinationRepository.create({ ...data, uuid, slug });
 };
 
 export const createDestinationBulk = async (dataArray) => {
@@ -94,5 +82,13 @@ export const createDestinationBulk = async (dataArray) => {
 };
 
 export const searchAndFilterDestinations = async (params) => {
-  return await DestinationRepository.searchAndFilter(params);
+  const rows = await DestinationRepository.searchAndFilter(params);
+  return rows.map((row) => ({
+    ...row,
+    place_types: splitCommaString(row.place_types),
+    categories: splitCommaString(row.categories),
+    age_categories: splitCommaString(row.age_categories),
+    activities: splitCommaString(row.activities),
+    facilities: splitCommaString(row.facilities),
+  }));
 };
