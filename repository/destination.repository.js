@@ -116,6 +116,7 @@ const Destination = {
     place_type_id,
     age_category_id,
     price_range,
+    sort_by,
   }) {
     let sql = getBaseSelect() + " WHERE 1=1\n";
     const params = [];
@@ -179,7 +180,25 @@ const Destination = {
       }
     }
 
-    sql += " GROUP BY tp.id LIMIT 10";
+    let orderBy = "";
+    switch (sort_by) {
+      case "highest-price":
+        orderBy = " ORDER BY tp.ticket_price_min DESC";
+        break;
+      case "lowest-price":
+        orderBy = " ORDER BY tp.ticket_price_min ASC";
+        break;
+      case "highest-rating":
+        orderBy = " ORDER BY tp.average_rating DESC";
+        break;
+      case "review-count":
+        orderBy = " ORDER BY tp.review_count DESC";
+        break;
+      default:
+        orderBy = "";
+    }
+
+    sql += " GROUP BY tp.id" + orderBy + " LIMIT 10";
 
     const [rows] = await db.query(sql, params);
     return rows;

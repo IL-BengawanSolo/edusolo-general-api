@@ -63,7 +63,7 @@ export const createDestinationBulk = async (req, res) => {
 
 export const searchAndFilter = async (req, res) => {
   try {
-    const { search, region_id, category_id, place_type_id, age_category_id, price_range } = req.query;
+    const { search, region_id, category_id, place_type_id, age_category_id, price_range, sort_by } = req.query;
     const results = await searchAndFilterDestinationsService({
       search,
       region_id,
@@ -71,6 +71,7 @@ export const searchAndFilter = async (req, res) => {
       place_type_id,
       age_category_id,
       price_range,
+      sort_by,
     });
     res.json({ success: true, data: results });
   } catch (error) {
