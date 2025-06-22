@@ -157,7 +157,7 @@ const Destination = {
       params.push(age_category_id);
     }
 
-    sql += " GROUP BY tp.id";
+    sql += " GROUP BY tp.id LIMIT 10";
 
     const [rows] = await db.query(sql, params);
     return rows;

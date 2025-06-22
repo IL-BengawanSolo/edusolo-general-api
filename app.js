@@ -1,11 +1,13 @@
 import { PORT } from "./config/env.js";
 
 import destinationRouter from "./routes/destination.routes.js";
+import placeTypeRouter from "./routes/place_type.routes.js";
+import categoryRouter from "./routes/category.routes.js";
+
 import cookieParser from "cookie-parser";
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import categoryRouter from "./routes/category.routes.js";
 
 const app = express();
 
@@ -17,6 +19,7 @@ app.use(bodyParser.json({ limit: "1mb" }));
 
 app.use("/api/v1/destinations", destinationRouter);
 app.use("/api/v1/categories", categoryRouter);
+app.use("/api/v1/place-types", placeTypeRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
