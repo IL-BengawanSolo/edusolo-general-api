@@ -63,16 +63,18 @@ export const createDestinationBulk = async (req, res) => {
 
 export const searchAndFilter = async (req, res) => {
   try {
-    const { search, region_id, category_id, place_type_id } = req.query;
+    const { search, region_id, category_id, place_type_id, age_category_id, price_range } = req.query;
     const results = await searchAndFilterDestinationsService({
       search,
       region_id,
       category_id,
       place_type_id,
+      age_category_id,
+      price_range,
     });
     res.json({ success: true, data: results });
   } catch (error) {
-    console.error("Error searching destinations:", error);
+    console.error("Error searching and filtering destinations:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

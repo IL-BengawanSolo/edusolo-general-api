@@ -71,9 +71,7 @@ const Destination = {
   },
 
   async findBySlug(slug) {
-    const sql =
-      getBaseSelect() +
-      " WHERE tp.slug = ? GROUP BY tp.id";
+    const sql = getBaseSelect() + " WHERE tp.slug = ? GROUP BY tp.id";
     const [rows] = await db.query(sql, [slug]);
     const row = rows[0];
     if (!row) return null;
@@ -117,6 +115,7 @@ const Destination = {
     category_id,
     place_type_id,
     age_category_id,
+    price_range,
   }) {
     let sql = getBaseSelect() + " WHERE 1=1\n";
     const params = [];
@@ -155,6 +154,29 @@ const Destination = {
       )
     `;
       params.push(age_category_id);
+    }
+
+    if (price_range) {
+      switch (price_range) {
+        case "free":
+          sql +=
+            " AND (tp.ticket_price_min = 0 OR tp.ticket_price_min IS NULL)";
+          break;
+        case "lt-10k":
+          sql += " AND tp.ticket_price_min > 0 AND tp.ticket_price_min < 10000";
+          break;
+        case "10-30":
+          sql +=
+            " AND tp.ticket_price_min >= 10000 AND tp.ticket_price_min <= 30000";
+          break;
+        case "30-100":
+          sql +=
+            " AND tp.ticket_price_min > 30000 AND tp.ticket_price_min <= 100000";
+          break;
+        case "gt-100k":
+          sql += " AND tp.ticket_price_min > 100000";
+          break;
+      }
     }
 
     sql += " GROUP BY tp.id LIMIT 10";
