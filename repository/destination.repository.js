@@ -125,7 +125,12 @@ const Destination = {
       sql += " AND tp.name LIKE ?";
       params.push(`%${search}%`);
     }
-    if (region_id) {
+
+    if (region_id && Array.isArray(region_id) && region_id.length > 0) {
+      const placeholders = region_id.map(() => "?").join(",");
+      sql += ` AND tp.region_id IN (${placeholders})`;
+      params.push(...region_id);
+    } else if (region_id) {
       sql += " AND tp.region_id = ?";
       params.push(region_id);
     }
@@ -223,7 +228,7 @@ const Destination = {
         orderBy = "";
     }
 
-    sql += " GROUP BY tp.id" + orderBy + " LIMIT 100";
+    sql += " GROUP BY tp.id" + orderBy + " LIMIT 10";
 
     const [rows] = await db.query(sql, params);
     return rows;
