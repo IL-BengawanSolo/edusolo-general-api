@@ -129,15 +129,26 @@ const Destination = {
       sql += " AND tp.region_id = ?";
       params.push(region_id);
     }
-    if (category_id) {
+
+    if (category_id && Array.isArray(category_id) && category_id.length > 0) {
+      const placeholders = category_id.map(() => "?").join(",");
+      sql += `
+      AND EXISTS (
+        SELECT 1 FROM tourist_place_categories tpc
+        WHERE tpc.place_id = tp.id AND tpc.category_id IN (${placeholders})
+      )
+      `;
+      params.push(...category_id);
+    } else if (category_id) {
       sql += `
       AND EXISTS (
         SELECT 1 FROM tourist_place_categories tpc
         WHERE tpc.place_id = tp.id AND tpc.category_id = ?
       )
-    `;
+      `;
       params.push(category_id);
     }
+
     if (place_type_id) {
       sql += `
       AND EXISTS (
@@ -198,7 +209,7 @@ const Destination = {
         orderBy = "";
     }
 
-    sql += " GROUP BY tp.id" + orderBy + " LIMIT 10";
+    sql += " GROUP BY tp.id" + orderBy + " LIMIT 100";
 
     const [rows] = await db.query(sql, params);
     return rows;
