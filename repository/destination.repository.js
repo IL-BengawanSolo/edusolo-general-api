@@ -149,15 +149,29 @@ const Destination = {
       params.push(category_id);
     }
 
-    if (place_type_id) {
+    if (
+      place_type_id &&
+      Array.isArray(place_type_id) &&
+      place_type_id.length > 0
+    ) {
+      const placeholders = place_type_id.map(() => "?").join(",");
+      sql += `
+      AND EXISTS (
+        SELECT 1 FROM tourist_place_types tpt
+        WHERE tpt.place_id = tp.id AND tpt.place_type_id IN (${placeholders})
+      )
+      `;
+      params.push(...place_type_id);
+    } else if (place_type_id) {
       sql += `
       AND EXISTS (
         SELECT 1 FROM tourist_place_types tpt
         WHERE tpt.place_id = tp.id AND tpt.place_type_id = ?
       )
-    `;
+      `;
       params.push(place_type_id);
     }
+
     if (age_category_id) {
       sql += `
       AND EXISTS (
