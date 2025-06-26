@@ -60,15 +60,24 @@ export const createDestinationBulk = async (req, res) => {
   }
 };
 
-
 export const searchAndFilter = async (req, res) => {
   try {
-    const { search, region_id, category_id, place_type_id, age_category_id, price_range, sort_by } = req.query;
-    const results = await searchAndFilterDestinationsService({
+    const {
       search,
-      region_id,
       category_id,
       place_type_id,
+      region_id,
+      open_days,
+      age_category_id,
+      price_range,
+      sort_by,
+    } = req.query;
+    const results = await searchAndFilterDestinationsService({
+      search,
+      category_id,
+      place_type_id,
+      region_id,
+      open_days,
       age_category_id,
       price_range,
       sort_by,

@@ -117,6 +117,7 @@ const Destination = {
     age_category_id,
     price_range,
     sort_by,
+    open_days,
   }) {
     let sql = getBaseSelect() + " WHERE 1=1\n";
     const params = [];
@@ -177,6 +178,30 @@ const Destination = {
       params.push(place_type_id);
     }
 
+    // Filter opening hours (hari buka)
+    if (open_days && Array.isArray(open_days) && open_days.length > 0) {
+      const placeholders = open_days.map(() => "?").join(",");
+      sql += `
+      AND EXISTS (
+        SELECT 1 FROM opening_hours oh
+        WHERE oh.place_id = tp.id
+          AND oh.day_of_week IN (${placeholders})
+          AND oh.is_closed = 0
+      )
+    `;
+      params.push(...open_days);
+    } else if (open_days) {
+      sql += `
+      AND EXISTS (
+        SELECT 1 FROM opening_hours oh
+        WHERE oh.place_id = tp.id
+          AND oh.day_of_week = ?
+          AND oh.is_closed = 0
+      )
+    `;
+      params.push(open_days);
+    }
+
     if (age_category_id) {
       sql += `
       AND EXISTS (
@@ -228,7 +253,7 @@ const Destination = {
         orderBy = "";
     }
 
-    sql += " GROUP BY tp.id" + orderBy + " LIMIT 10";
+    sql += " GROUP BY tp.id" + orderBy + " LIMIT 100";
 
     const [rows] = await db.query(sql, params);
     return rows;
