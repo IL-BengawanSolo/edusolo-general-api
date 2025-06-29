@@ -92,3 +92,19 @@ export const searchAndFilterDestinations = async (params) => {
     facilities: splitCommaString(row.facilities),
   }));
 };
+
+export const getSimilarDestinations = async (slug, limit = 10) => {
+  const rows = await DestinationRepository.findSimilarBySlug(slug, limit);
+  return rows.map((row) => ({
+    ...row,
+    place_types: splitCommaString(row.place_types),
+    categories: splitCommaString(row.categories),
+    age_categories: splitCommaString(row.age_categories),
+    activities: splitCommaString(row.activities),
+    facilities: splitCommaString(row.facilities),
+    opening_hours: row.opening_hours ? preprocessOpeningHours(row.opening_hours) : [],
+  }));
+};
+
+
+

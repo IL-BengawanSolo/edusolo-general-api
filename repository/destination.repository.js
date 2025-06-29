@@ -258,6 +258,70 @@ const Destination = {
     const [rows] = await db.query(sql, params);
     return rows;
   },
+
+  async findSimilarBySlug(slug, limit = 10) {
+    // Ambil kategori dan place_type dari destinasi utama
+    const [mainRows] = await db.query(
+      `
+    SELECT 
+      tp.id,
+      GROUP_CONCAT(DISTINCT tpc.category_id) AS category_ids,
+      GROUP_CONCAT(DISTINCT tpt.place_type_id) AS place_type_ids
+    FROM tourist_places tp
+    LEFT JOIN tourist_place_categories tpc ON tp.id = tpc.place_id
+    LEFT JOIN tourist_place_types tpt ON tp.id = tpt.place_id
+    WHERE tp.slug = ?
+    GROUP BY tp.id
+    `,
+      [slug]
+    );
+    const main = mainRows[0];
+    if (!main) return [];
+
+    // Siapkan array id
+    const categoryIds = main.category_ids
+      ? main.category_ids.split(",").map(Number)
+      : [];
+    const placeTypeIds = main.place_type_ids
+      ? main.place_type_ids.split(",").map(Number)
+      : [];
+    if (categoryIds.length === 0 && placeTypeIds.length === 0) return [];
+
+    // Query destinasi serupa (kecuali dirinya sendiri)
+    let sql =
+      getBaseSelect() +
+      `
+    WHERE tp.slug != ?
+  `;
+    const params = [slug];
+
+    if (categoryIds.length > 0) {
+      const placeholders = categoryIds.map(() => "?").join(",");
+      sql += `
+      AND EXISTS (
+        SELECT 1 FROM tourist_place_categories tpc
+        WHERE tpc.place_id = tp.id AND tpc.category_id IN (${placeholders})
+      )
+    `;
+      params.push(...categoryIds);
+    }
+    if (placeTypeIds.length > 0) {
+      const placeholders = placeTypeIds.map(() => "?").join(",");
+      sql += `
+      AND EXISTS (
+        SELECT 1 FROM tourist_place_types tpt
+        WHERE tpt.place_id = tp.id AND tpt.place_type_id IN (${placeholders})
+      )
+    `;
+      params.push(...placeTypeIds);
+    }
+
+    sql += " GROUP BY tp.id LIMIT ?";
+    params.push(limit);
+
+    const [rows] = await db.query(sql, params);
+    return rows;
+  },
 };
 
 export default Destination;

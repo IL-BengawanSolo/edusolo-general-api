@@ -3,6 +3,7 @@ import {
   createDestinationBulk as createDestinationBulkService,
   getAllDestinations as getAllDestinationsService,
   searchAndFilterDestinations as searchAndFilterDestinationsService,
+  getSimilarDestinations as getSimilarDestinationsService,
 } from "../services/destination.service.js";
 
 export const getDestinationBySlug = async (req, res) => {
@@ -85,6 +86,18 @@ export const searchAndFilter = async (req, res) => {
     res.json({ success: true, data: results });
   } catch (error) {
     console.error("Error searching and filtering destinations:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const getSimilarDestinations = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { limit } = req.query;
+    const results = await getSimilarDestinationsService(slug, Number(limit) || 10);
+    res.json({ success: true, data: results });
+  } catch (error) {
+    console.error("Error fetching similar destinations:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
