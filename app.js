@@ -1,5 +1,7 @@
 import { PORT } from "./config/env.js";
+import passport from "./config/passport.js";
 
+import authRouter from "./routes/auth.routes.js";
 import destinationRouter from "./routes/destination.routes.js";
 import placeTypeRouter from "./routes/place_type.routes.js";
 import categoryRouter from "./routes/category.routes.js";
@@ -18,7 +20,9 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 app.use(cookieParser());
 app.use(bodyParser.json({ limit: "1mb" }));
+app.use(passport.initialize());
 
+app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/age-categories", ageCategoryRouter);
 app.use("/api/v1/destinations", destinationRouter);
 app.use("/api/v1/categories", categoryRouter);
