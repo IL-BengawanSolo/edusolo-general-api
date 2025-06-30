@@ -7,6 +7,7 @@ import placeTypeRouter from "./routes/place_type.routes.js";
 import categoryRouter from "./routes/category.routes.js";
 import ageCategoryRouter from "./routes/age_category.routes.js";
 import regionRouter from "./routes/region.routes.js";
+import recommendationRouter from "./routes/recommendation.routes.js";
 
 import cookieParser from "cookie-parser";
 import express from "express";
@@ -28,6 +29,7 @@ app.use("/api/v1/destinations", destinationRouter);
 app.use("/api/v1/categories", categoryRouter);
 app.use("/api/v1/place-types", placeTypeRouter);
 app.use("/api/v1/regions", regionRouter);
+app.use("/api/v1/recommendations", recommendationRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
