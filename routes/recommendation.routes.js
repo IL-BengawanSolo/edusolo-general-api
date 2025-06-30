@@ -1,7 +1,10 @@
 import { Router } from "express";
 import passport from "../config/passport.js";
 import { checkUserRecommendationSession } from "../controllers/recommendation.controller.js";
-import { getQuestions } from "../controllers/question.controller.js"; // tambahkan import ini
+import { getQuestions } from "../controllers/question.controller.js";
+import { postRecommendationSession } from "../controllers/recommendation.controller.js";
+import { getAIRecommendations } from "../controllers/recommendation.controller.js";
+
 
 const recommendationRouter = Router();
 
@@ -12,5 +15,18 @@ recommendationRouter.get(
 );
 
 recommendationRouter.get("/questions", getQuestions);
+
+recommendationRouter.post(
+  "/sessions",
+  passport.authenticate("jwt", { session: false }),
+  postRecommendationSession
+);
+
+recommendationRouter.post(
+  "/ai",
+  passport.authenticate("jwt", { session: false }),
+  getAIRecommendations
+);
+
 
 export default recommendationRouter;
