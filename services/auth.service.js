@@ -34,3 +34,7 @@ export const registerUser = async ({ first_name, last_name, email, password }) =
     password_hash,
   });
 };
+
+export const updateLastLogin = async (userId) => {
+  await UserRepository.updateLastLoginAt(userId, new Date());
+};

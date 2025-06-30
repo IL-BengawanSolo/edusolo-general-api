@@ -21,5 +21,12 @@ const UserRepository = {
       [uuid, first_name, last_name || null, email, password_hash]
     );
   },
+
+  async updateLastLoginAt(id, date) {
+    await db.query(`UPDATE ${table} SET last_login_at = ? WHERE id = ?`, [
+      date,
+      id,
+    ]);
+  },
 };
 export default UserRepository;

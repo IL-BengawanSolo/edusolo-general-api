@@ -1,30 +1,39 @@
 import passport from "../config/passport.js";
 
-import { generateJwtToken, registerUser } from "../services/auth.service.js";
+import {
+  generateJwtToken,
+  registerUser,
+  updateLastLogin,
+} from "../services/auth.service.js";
 
 export const login = (req, res, next) => {
-  passport.authenticate("local", { session: false }, (err, user, info) => {
-    if (err) return next(err);
-    if (!user)
-      return res
-        .status(401)
-        .json({ success: false, message: info?.message || "Unauthorized" });
+  passport.authenticate(
+    "local",
+    { session: false },
+    async (err, user, info) => {
+      if (err) return next(err);
+      if (!user)
+        return res
+          .status(401)
+          .json({ success: false, message: info?.message || "Unauthorized" });
 
-    const token = generateJwtToken(user);
+      await updateLastLogin(user.id);
+      const token = generateJwtToken(user);
 
-    res.json({
-      success: true,
-      data: {
-        token: "Bearer " + token,
-        user: {
-          id: user.id,
-          email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name,
+      res.json({
+        success: true,
+        data: {
+          token: "Bearer " + token,
+          user: {
+            id: user.id,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+          },
         },
-      },
-    });
-  })(req, res, next);
+      });
+    }
+  )(req, res, next);
 };
 
 export const me = (req, res, next) => {
