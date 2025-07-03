@@ -253,7 +253,7 @@ const Destination = {
         orderBy = "";
     }
 
-    sql += " GROUP BY tp.id" + orderBy + " LIMIT 1";
+    sql += " GROUP BY tp.id" + orderBy + " LIMIT 100";
 
     const [rows] = await db.query(sql, params);
     return rows;

@@ -1,6 +1,9 @@
 import { hasUserRecommendationSession } from "../services/recommendation.service.js";
 import { createRecommendationSession } from "../services/recommendation.service.js";
 import { createRecommendationResult } from "../services/recommendation.service.js";
+import { getDestinationsByRecommendationSession } from "../services/recommendation.service.js";
+import RecommendationSessionRepository from "../repository/recommendation_session.repository.js";
+
 
 export const checkUserRecommendationSession = async (req, res) => {
   try {
@@ -73,6 +76,34 @@ export const getAIRecommendations = async (req, res) => {
     res.json({ success: true, data: { ai: data, savedResults } });
   } catch (error) {
     console.error("Error fetching AI recommendations:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const getDestinationsFromRecommendationResult = async (req, res) => {
+  try {
+    const { session_id } = req.params;
+    if (!session_id) {
+      return res.status(400).json({ success: false, message: "Missing session_id" });
+    }
+    const destinations = await getDestinationsByRecommendationSession(session_id);
+    res.json({ success: true, data: destinations });
+  } catch (error) {
+    console.error("Error fetching destinations from recommendation result:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const getLastRecommendationSession = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    const session = await RecommendationSessionRepository.findLastByUserId(userId);
+    res.json({ success: true, data: session });
+  } catch (error) {
+    console.error("Error fetching last recommendation session:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

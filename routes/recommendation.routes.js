@@ -4,6 +4,8 @@ import { checkUserRecommendationSession } from "../controllers/recommendation.co
 import { getQuestions } from "../controllers/question.controller.js";
 import { postRecommendationSession } from "../controllers/recommendation.controller.js";
 import { getAIRecommendations } from "../controllers/recommendation.controller.js";
+import { getDestinationsFromRecommendationResult } from "../controllers/recommendation.controller.js";
+import { getLastRecommendationSession } from "../controllers/recommendation.controller.js";
 
 
 const recommendationRouter = Router();
@@ -26,6 +28,18 @@ recommendationRouter.post(
   "/ai",
   passport.authenticate("jwt", { session: false }),
   getAIRecommendations
+);
+
+recommendationRouter.get(
+  "/results/:session_id",
+  passport.authenticate("jwt", { session: false }),
+  getDestinationsFromRecommendationResult
+);
+
+recommendationRouter.get(
+  "/last-session",
+  passport.authenticate("jwt", { session: false }),
+  getLastRecommendationSession
 );
 
 
