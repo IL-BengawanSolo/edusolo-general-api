@@ -118,10 +118,13 @@ const Destination = {
     price_range,
     sort_by,
     open_days,
+    page = 1, // Default halaman pertama
+    limit = 10, // Default jumlah data per halaman
   }) {
     let sql = getBaseSelect() + " WHERE 1=1\n";
     const params = [];
 
+    // Filter logic tetap sama seperti sebelumnya
     if (search) {
       sql += " AND tp.name LIKE ?";
       params.push(`%${search}%`);
@@ -235,6 +238,7 @@ const Destination = {
       }
     }
 
+    // Sorting logic
     let orderBy = "";
     switch (sort_by) {
       case "highest-price":
@@ -253,12 +257,19 @@ const Destination = {
         orderBy = "";
     }
 
-    sql += " GROUP BY tp.id" + orderBy + " LIMIT 100";
+    // Tambahkan pagination dengan LIMIT dan OFFSET
+    const offset = (page - 1) * limit;
+    sql += " GROUP BY tp.id" + orderBy + ` LIMIT ? OFFSET ?`;
+    params.push(parseInt(limit, 10), parseInt(offset, 10));
 
     const [rows] = await db.query(sql, params);
     return rows;
   },
 
+
+
+
+  // ---------------------------------------------------------------
   async findSimilarBySlug(slug, limit = 10) {
     // Ambil kategori dan place_type dari destinasi utama
     const [mainRows] = await db.query(

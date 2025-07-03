@@ -72,6 +72,8 @@ export const searchAndFilter = async (req, res) => {
       age_category_id,
       price_range,
       sort_by,
+      page,
+      limit
     } = req.query;
     const results = await searchAndFilterDestinationsService({
       search,
@@ -82,6 +84,8 @@ export const searchAndFilter = async (req, res) => {
       age_category_id,
       price_range,
       sort_by,
+      page,
+      limit
     });
     res.json({ success: true, data: results });
   } catch (error) {
