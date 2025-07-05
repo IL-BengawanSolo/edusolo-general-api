@@ -7,7 +7,11 @@ import {
   getSimilarDestinations,
 } from "../controllers/destination.controller.js";
 
-import { uploadPlaceImage, getPlaceImages } from "../controllers/place_image.controller.js";
+import {
+  uploadPlaceImage,
+  getPlaceImages,
+  uploadPlaceImagesBulk,
+} from "../controllers/place_image.controller.js";
 
 import upload from "../middlewares/upload.js";
 import { validateUuid } from "../middlewares/validateUuid.js";
@@ -35,6 +39,13 @@ destinationRouter.post(
   validateUuid,
   upload.single("image"),
   uploadPlaceImage
+);
+
+destinationRouter.post(
+  "/:uuid/upload-images",
+  validateUuid,
+  upload.array("images", 10), // max 10 files per request, adjust as needed
+  uploadPlaceImagesBulk
 );
 
 destinationRouter.get("/:uuid/images", validateUuid, getPlaceImages);
