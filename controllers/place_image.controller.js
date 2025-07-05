@@ -19,14 +19,38 @@ export const uploadPlaceImage = async (req, res) => {
   }
 };
 
+// export const getPlaceImages = async (req, res) => {
+//   try {
+//     const placeId = req.placeId; // Dapatkan place_id dari middleware validateUuid
+
+//     // Ambil semua gambar terkait destinasi
+//     const images = await getImagesByPlaceId(placeId);
+
+//     res.json({ success: true, data: images });
+//   } catch (error) {
+//     console.error("Error fetching images:", error);
+//     res.status(500).json({ success: false, message: "Internal server error" });
+//   }
+// };
+
+
 export const getPlaceImages = async (req, res) => {
   try {
-    const placeId = req.placeId; // Dapatkan place_id dari middleware validateUuid
-
-    // Ambil semua gambar terkait destinasi
+    const placeId = req.placeId;
     const images = await getImagesByPlaceId(placeId);
 
-    res.json({ success: true, data: images });
+    // Ambil base URL dari request
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+    // Ubah image_url menjadi absolute URL
+    const imagesWithFullUrl = images.map(img => ({
+      ...img,
+      image_url: img.image_url.startsWith("http")
+        ? img.image_url
+        : baseUrl + img.image_url
+    }));
+
+    res.json({ success: true, data: imagesWithFullUrl });
   } catch (error) {
     console.error("Error fetching images:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
