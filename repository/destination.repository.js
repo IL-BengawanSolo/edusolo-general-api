@@ -70,6 +70,14 @@ const Destination = {
     return rows;
   },
 
+  async findByUuid(uuid) {
+    const [rows] = await db.query(
+      `SELECT id, slug FROM ${table} WHERE uuid = ? LIMIT 1`,
+      [uuid]
+    );
+    return rows[0] || null;
+  },
+
   async findBySlug(slug) {
     const sql = getBaseSelect() + " WHERE tp.slug = ? GROUP BY tp.id";
     const [rows] = await db.query(sql, [slug]);
@@ -265,9 +273,6 @@ const Destination = {
     const [rows] = await db.query(sql, params);
     return rows;
   },
-
-
-
 
   // ---------------------------------------------------------------
   async findSimilarBySlug(slug, limit = 10) {

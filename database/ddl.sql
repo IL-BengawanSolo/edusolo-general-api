@@ -82,13 +82,10 @@ CREATE TABLE `opening_hours` (
 
 CREATE TABLE `place_images` (
   `id` INT PRIMARY KEY AUTO_INCREMENT,
-  `uuid` CHAR(36) UNIQUE NOT NULL,
   `place_id` INT NOT NULL,
   `image_url` TEXT NOT NULL,
-  `caption` TEXT NULL,
   `is_primary` BOOLEAN DEFAULT FALSE,
   `uploaded_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (`place_id`) REFERENCES `tourist_places`(`id`) ON DELETE CASCADE
 );
 
