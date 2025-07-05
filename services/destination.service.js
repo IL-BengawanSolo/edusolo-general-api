@@ -45,6 +45,30 @@ function splitCommaString(str) {
   return [];
 }
 
+export function addAbsoluteThumbnailUrl(data, req) {
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  if (Array.isArray(data)) {
+    return data.map(row => ({
+      ...row,
+      thumbnail_url: row.thumbnail_url
+        ? (row.thumbnail_url.startsWith("http")
+            ? row.thumbnail_url
+            : baseUrl + row.thumbnail_url)
+        : null
+    }));
+  } else if (data && typeof data === "object") {
+    return {
+      ...data,
+      thumbnail_url: data.thumbnail_url
+        ? (data.thumbnail_url.startsWith("http")
+            ? data.thumbnail_url
+            : baseUrl + data.thumbnail_url)
+        : null
+    };
+  }
+  return data;
+}
+
 export const getDestinationBySlug = async (slug) => {
   const row = await DestinationRepository.findBySlug(slug);
   if (!row) return null;

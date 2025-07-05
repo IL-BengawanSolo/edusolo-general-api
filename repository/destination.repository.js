@@ -24,7 +24,8 @@ function getBaseSelect() {
       pt.place_types,
       c.categories,
       ac.age_categories,
-      oh.opening_hours
+      oh.opening_hours,
+      pi.thumbnail_url
     FROM tourist_places tp
     LEFT JOIN regions r ON tp.region_id = r.id
     LEFT JOIN (
@@ -60,6 +61,12 @@ function getBaseSelect() {
       FROM opening_hours oh
       GROUP BY oh.place_id
     ) oh ON tp.id = oh.place_id
+    LEFT JOIN (
+      SELECT place_id, MIN(image_url) AS thumbnail_url
+      FROM place_images
+      WHERE is_primary = 1
+      GROUP BY place_id
+    ) pi ON tp.id = pi.place_id
   `;
 }
 

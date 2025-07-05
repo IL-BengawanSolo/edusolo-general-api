@@ -4,6 +4,7 @@ import {
   getAllDestinations as getAllDestinationsService,
   searchAndFilterDestinations as searchAndFilterDestinationsService,
   getSimilarDestinations as getSimilarDestinationsService,
+  addAbsoluteThumbnailUrl,
 } from "../services/destination.service.js";
 
 export const getDestinationBySlug = async (req, res) => {
@@ -32,9 +33,10 @@ export const getDestinationBySlug = async (req, res) => {
 export const getAllDestinations = async (req, res) => {
   try {
     const destinations = await getAllDestinationsService();
+    const destinationsWithUrl = addAbsoluteThumbnailUrl(destinations, req);
     return res.status(200).json({
       success: true,
-      data: destinations,
+      data: destinationsWithUrl,
     });
   } catch (error) {
     console.error("Error fetching destinations with relations:", error);
@@ -73,7 +75,7 @@ export const searchAndFilter = async (req, res) => {
       price_range,
       sort_by,
       page,
-      limit
+      limit,
     } = req.query;
     const results = await searchAndFilterDestinationsService({
       search,
@@ -85,9 +87,11 @@ export const searchAndFilter = async (req, res) => {
       price_range,
       sort_by,
       page,
-      limit
+      limit,
     });
-    res.json({ success: true, data: results });
+
+    const resultsWithUrl = addAbsoluteThumbnailUrl(results, req);
+    res.json({ success: true, data: resultsWithUrl });
   } catch (error) {
     console.error("Error searching and filtering destinations:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
@@ -98,8 +102,13 @@ export const getSimilarDestinations = async (req, res) => {
   try {
     const { slug } = req.params;
     const { limit } = req.query;
-    const results = await getSimilarDestinationsService(slug, Number(limit) || 10);
-    res.json({ success: true, data: results });
+    const results = await getSimilarDestinationsService(
+      slug,
+      Number(limit) || 10
+    );
+    const resultsWithUrl = addAbsoluteThumbnailUrl(results, req);
+
+    res.json({ success: true, data: resultsWithUrl });
   } catch (error) {
     console.error("Error fetching similar destinations:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
