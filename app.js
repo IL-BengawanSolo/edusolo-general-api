@@ -4,6 +4,7 @@ import passport from "./config/passport.js";
 import authRouter from "./routes/auth.routes.js";
 import destinationRouter from "./routes/destination.routes.js";
 import recommendationRouter from "./routes/recommendation.routes.js";
+import chatbotRouter from "./routes/chatbot.routes.js";
 
 import cookieParser from "cookie-parser";
 import express from "express";
@@ -26,6 +27,8 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/destinations", destinationRouter);
 app.use("/api/v1/recommendations", recommendationRouter);
+
+app.use("/api/v1/chatbot", chatbotRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");

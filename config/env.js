@@ -12,4 +12,5 @@ export const {
   MYSQL_DATABASE,
   JWT_SECRET,
   JWT_EXPIRES_IN,
+  GROQ_API_KEY
 } = process.env;
