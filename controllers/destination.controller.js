@@ -4,8 +4,10 @@ import {
   getAllDestinations as getAllDestinationsService,
   searchAndFilterDestinations as searchAndFilterDestinationsService,
   getSimilarDestinations as getSimilarDestinationsService,
-  addAbsoluteThumbnailUrl,
+
 } from "../services/destination.service.js";
+
+import { addAbsoluteImageUrl } from "../utils/url_image.js";
 
 export const getDestinationBySlug = async (req, res) => {
   const { slug } = req.params;
@@ -33,7 +35,7 @@ export const getDestinationBySlug = async (req, res) => {
 export const getAllDestinations = async (req, res) => {
   try {
     const destinations = await getAllDestinationsService();
-    const destinationsWithUrl = addAbsoluteThumbnailUrl(destinations, req);
+    const destinationsWithUrl = addAbsoluteImageUrl(destinations, req);
     return res.status(200).json({
       success: true,
       data: destinationsWithUrl,
@@ -90,7 +92,7 @@ export const searchAndFilter = async (req, res) => {
       limit,
     });
 
-    const resultsWithUrl = addAbsoluteThumbnailUrl(results, req);
+    const resultsWithUrl = addAbsoluteImageUrl(results, req);
     res.json({ success: true, data: resultsWithUrl });
   } catch (error) {
     console.error("Error searching and filtering destinations:", error);
@@ -106,7 +108,7 @@ export const getSimilarDestinations = async (req, res) => {
       slug,
       Number(limit) || 10
     );
-    const resultsWithUrl = addAbsoluteThumbnailUrl(results, req);
+    const resultsWithUrl = addAbsoluteImageUrl(results, req);
 
     res.json({ success: true, data: resultsWithUrl });
   } catch (error) {

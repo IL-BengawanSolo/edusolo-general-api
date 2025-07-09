@@ -11,7 +11,7 @@ const RecommendationResultRepository = {
     return { id: result.insertId, session_id, place_id, score };
   },
 
- async findDestinationsBySessionId(session_id) {
+  async findDestinationsBySessionId(session_id) {
     const [rows] = await db.query(
       `SELECT 
         rr.id AS recommendation_result_id,
@@ -24,6 +24,7 @@ const RecommendationResultRepository = {
         tp.ticket_price_min,
         tp.ticket_price_max,
         r.name AS region_name,
+        pi.thumbnail_url,
         GROUP_CONCAT(DISTINCT pt.name) AS place_types,
         GROUP_CONCAT(DISTINCT c.name) AS categories,
         GROUP_CONCAT(DISTINCT ac.name) AS age_categories
@@ -36,6 +37,12 @@ const RecommendationResultRepository = {
       LEFT JOIN categories c ON tpc.category_id = c.id
       LEFT JOIN tourist_place_age_categories tpac ON tp.id = tpac.place_id
       LEFT JOIN age_categories ac ON tpac.age_category_id = ac.id
+      LEFT JOIN (
+        SELECT place_id, MIN(image_url) AS thumbnail_url
+        FROM place_images
+        WHERE is_primary = 1
+        GROUP BY place_id
+      ) pi ON tp.id = pi.place_id
       WHERE rr.session_id = ?
       GROUP BY rr.id
       ORDER BY rr.score DESC`,

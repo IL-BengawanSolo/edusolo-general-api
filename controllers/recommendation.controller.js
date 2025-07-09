@@ -3,7 +3,7 @@ import { createRecommendationSession } from "../services/recommendation.service.
 import { createRecommendationResult } from "../services/recommendation.service.js";
 import { getDestinationsByRecommendationSession } from "../services/recommendation.service.js";
 import RecommendationSessionRepository from "../repository/recommendation_session.repository.js";
-
+import { addAbsoluteImageUrl } from "../utils/url_image.js";
 
 export const checkUserRecommendationSession = async (req, res) => {
   try {
@@ -87,7 +87,8 @@ export const getDestinationsFromRecommendationResult = async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing session_id" });
     }
     const destinations = await getDestinationsByRecommendationSession(session_id);
-    res.json({ success: true, data: destinations });
+        const destinationsWithUrl = addAbsoluteImageUrl(destinations, req);
+    res.json({ success: true, data: destinationsWithUrl });
   } catch (error) {
     console.error("Error fetching destinations from recommendation result:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
