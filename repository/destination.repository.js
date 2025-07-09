@@ -15,8 +15,8 @@ function getBaseSelect() {
       tp.ticket_price_min,
       tp.ticket_price_max,
       tp.ticket_price_info,
-      tp.activities,
-      tp.facilities,
+      GROUP_CONCAT(DISTINCT a.name) AS activities,
+      GROUP_CONCAT(DISTINCT f.name) AS facilities,
       tp.review_count,
       tp.average_rating,
       tp.website_url,
@@ -67,6 +67,10 @@ function getBaseSelect() {
       WHERE is_primary = 1
       GROUP BY place_id
     ) pi ON tp.id = pi.place_id
+    LEFT JOIN tourist_place_activities tpa ON tp.id = tpa.place_id
+    LEFT JOIN activities a ON tpa.activity_id = a.id
+    LEFT JOIN tourist_place_facilities tpf ON tp.id = tpf.place_id
+    LEFT JOIN facilities f ON tpf.facility_id = f.id
   `;
 }
 
