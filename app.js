@@ -31,9 +31,11 @@ app.use("/api/v1/recommendations", recommendationRouter);
 app.use("/api/v1/chatbot", chatbotRouter);
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Welcome to the EduSolo API!");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port http://localhost:${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server is running on port http://localhost:${PORT}`);
+// });
+
+export default app;
