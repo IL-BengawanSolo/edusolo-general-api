@@ -2,6 +2,7 @@ import UserRepository from "../repository/user.repository.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
+import { JWT_SECRET, JWT_EXPIRES_IN } from "../config/env.js";
 
 export const authenticateUser = async (email, password) => {
   const user = await UserRepository.findByEmail(email);
@@ -13,7 +14,7 @@ export const authenticateUser = async (email, password) => {
 
 export const generateJwtToken = (user) => {
   const payload = { id: user.id, email: user.email };
-  return jwt.sign(payload, process.env.JWT_SECRET || "secret", { expiresIn: "1d" });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN || "1d" });
 };
 
 export const registerUser = async ({ first_name, last_name, email, password }) => {

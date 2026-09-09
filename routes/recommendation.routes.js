@@ -6,6 +6,8 @@ import { postRecommendationSession } from "../controllers/recommendation.control
 import { getAIRecommendations } from "../controllers/recommendation.controller.js";
 import { getDestinationsFromRecommendationResult } from "../controllers/recommendation.controller.js";
 import { getLastRecommendationSession } from "../controllers/recommendation.controller.js";
+import { validate } from "../middlewares/validate.js";
+import { aiRecommendSchema, sessionIdParamSchema } from "../utils/validators.js";
 
 
 const recommendationRouter = Router();
@@ -27,12 +29,14 @@ recommendationRouter.post(
 recommendationRouter.post(
   "/ai",
   passport.authenticate("jwt", { session: false }),
+  validate(aiRecommendSchema),
   getAIRecommendations
 );
 
 recommendationRouter.get(
   "/results/:session_id",
   passport.authenticate("jwt", { session: false }),
+  validate(sessionIdParamSchema, "params"),
   getDestinationsFromRecommendationResult
 );
 
