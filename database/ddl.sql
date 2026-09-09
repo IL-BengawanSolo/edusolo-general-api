@@ -9,7 +9,7 @@ CREATE TABLE
     `password_hash` VARCHAR(255) NOT NULL,
     `phone` VARCHAR(16) NULL,
     `dob` DATE NULL,
-    `role` ENUM('user','admin') NOT NULL DEFAULT 'user',
+    `role` ENUM('user','admin','super_admin') NOT NULL DEFAULT 'user',
     `is_active` BOOLEAN DEFAULT TRUE,
     `last_login_at` DATETIME NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

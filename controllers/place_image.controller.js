@@ -50,11 +50,11 @@ export const getPlaceImages = async (req, res) => {
     const isVercel = host && host.includes("vercel.app");
     const baseUrl = process.env.BASE_URL || `${isVercel ? "https" : proto}://${host}`;
 
-    // Ubah image_url menjadi absolute URL
+    // Force https to avoid mixed content
     const imagesWithFullUrl = images.map((img) => ({
       ...img,
       image_url: img.image_url.startsWith("http")
-        ? img.image_url
+        ? img.image_url.replace(/^http:\/\//i, "https://")
         : baseUrl + img.image_url,
     }));
 

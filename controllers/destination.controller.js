@@ -22,9 +22,10 @@ export const getDestinationBySlug = async (req, res) => {
         message: "Destination not found",
       });
     }
+    const withUrl = addAbsoluteImageUrl([destination], req);
     return res.status(200).json({
       success: true,
-      data: destination,
+      data: withUrl[0],
     });
   } catch (error) {
     console.error("Error fetching destination:", error);

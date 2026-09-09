@@ -30,7 +30,7 @@ import { getRegions } from "../controllers/region.controller.js";
 import { getCategories } from "../controllers/category.controller.js";
 import { validate } from "../middlewares/validate.js";
 import { paginationQuerySchema, searchQuerySchema, similarQuerySchema, slugParamSchema, uuidParamSchema, singleDestinationSchema, updateDestinationSchema, imageIdParamSchema } from "../utils/validators.js";
-import { requireAdmin } from "../middlewares/requireAdmin.js";
+import { requireAdmin, requireSuperAdmin } from "../middlewares/requireAdmin.js";
 
 const destinationRouter = Router();
 
@@ -43,16 +43,16 @@ destinationRouter.get("/categories", getCategories);
 destinationRouter.get("/by-uuid/:uuid", passport.authenticate("jwt", { session: false }), requireAdmin, validate(uuidParamSchema, "params"), validateUuid, getDestinationByUuid);
 destinationRouter.get("/:slug", validate(slugParamSchema, "params"), getDestinationBySlug);
 destinationRouter.get("/:slug/similar", validate(slugParamSchema, "params"), validate(similarQuerySchema, "query"), getSimilarDestinations);
-destinationRouter.post("/", passport.authenticate("jwt", { session: false }), requireAdmin, validate(singleDestinationSchema), createDestination);
-destinationRouter.put("/:uuid", passport.authenticate("jwt", { session: false }), requireAdmin, validate(uuidParamSchema, "params"), validateUuid, validate(updateDestinationSchema), updateDestination);
-destinationRouter.delete("/:uuid", passport.authenticate("jwt", { session: false }), requireAdmin, validate(uuidParamSchema, "params"), validateUuid, deleteDestination);
-destinationRouter.post("/bulk", passport.authenticate("jwt", { session: false }), requireAdmin, bulkRateLimiter, createDestinationBulk);
+destinationRouter.post("/", passport.authenticate("jwt", { session: false }), requireSuperAdmin, validate(singleDestinationSchema), createDestination);
+destinationRouter.put("/:uuid", passport.authenticate("jwt", { session: false }), requireSuperAdmin, validate(uuidParamSchema, "params"), validateUuid, validate(updateDestinationSchema), updateDestination);
+destinationRouter.delete("/:uuid", passport.authenticate("jwt", { session: false }), requireSuperAdmin, validate(uuidParamSchema, "params"), validateUuid, deleteDestination);
+destinationRouter.post("/bulk", passport.authenticate("jwt", { session: false }), requireSuperAdmin, bulkRateLimiter, createDestinationBulk);
 
 // Routes for images
 destinationRouter.post(
   "/:uuid/upload-image",
   passport.authenticate("jwt", { session: false }),
-  requireAdmin,
+  requireSuperAdmin,
   validateUuid,
   upload.single("image"),
   uploadPlaceImage
@@ -61,13 +61,13 @@ destinationRouter.post(
 destinationRouter.post(
   "/:uuid/upload-images",
   passport.authenticate("jwt", { session: false }),
-  requireAdmin,
+  requireSuperAdmin,
   validateUuid,
   upload.array("images", 10),
   uploadPlaceImagesBulk
 );
 
 destinationRouter.get("/:uuid/images", validate(uuidParamSchema, "params"), validateUuid, getPlaceImages);
-destinationRouter.delete("/:uuid/images/:imageId", passport.authenticate("jwt", { session: false }), requireAdmin, validate(imageIdParamSchema, "params"), validateUuid, deletePlaceImage);
-destinationRouter.patch("/:uuid/images/:imageId/primary", passport.authenticate("jwt", { session: false }), requireAdmin, validate(imageIdParamSchema, "params"), validateUuid, setPrimaryImage);
+destinationRouter.delete("/:uuid/images/:imageId", passport.authenticate("jwt", { session: false }), requireSuperAdmin, validate(imageIdParamSchema, "params"), validateUuid, deletePlaceImage);
+destinationRouter.patch("/:uuid/images/:imageId/primary", passport.authenticate("jwt", { session: false }), requireSuperAdmin, validate(imageIdParamSchema, "params"), validateUuid, setPrimaryImage);
 export default destinationRouter;

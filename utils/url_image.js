@@ -5,12 +5,14 @@ export function addAbsoluteImageUrl(data, req, field = "thumbnail_url") {
   const isVercel = host && host.includes("vercel.app");
   const baseProto = isVercel ? "https" : proto;
   const baseUrl = process.env.BASE_URL || `${baseProto}://${host}`;
+  // Force https for any http URL to avoid mixed content (Vercel is https)
+  const toHttps = (url) => url.replace(/^http:\/\//i, "https://");
   if (Array.isArray(data)) {
     return data.map(row => ({
       ...row,
       [field]: row[field]
         ? (row[field].startsWith("http")
-            ? row[field]
+            ? toHttps(row[field])
             : baseUrl + row[field])
         : null
     }));
@@ -19,7 +21,7 @@ export function addAbsoluteImageUrl(data, req, field = "thumbnail_url") {
       ...data,
       [field]: data[field]
         ? (data[field].startsWith("http")
-            ? data[field]
+            ? toHttps(data[field])
             : baseUrl + data[field])
         : null
     };
