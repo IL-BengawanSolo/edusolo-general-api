@@ -1,10 +1,13 @@
 import {
   getDestinationBySlug as getDestinationBySlugService,
+  getDestinationByUuid as getDestinationByUuidService,
+  createDestination as createDestinationService,
   createDestinationBulk as createDestinationBulkService,
   getAllDestinations as getAllDestinationsService,
   searchAndFilterDestinations as searchAndFilterDestinationsService,
   getSimilarDestinations as getSimilarDestinationsService,
-
+  updateDestination as updateDestinationService,
+  deleteDestination as deleteDestinationService,
 } from "../services/destination.service.js";
 
 import { addAbsoluteImageUrl } from "../utils/url_image.js";
@@ -51,6 +54,19 @@ export const getAllDestinations = async (req, res) => {
   }
 };
 
+export const createDestination = async (req, res) => {
+  try {
+    const result = await createDestinationService(req.body);
+    return res.status(201).json({ success: true, data: result });
+  } catch (error) {
+    if (error.message === "name is required") {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+    console.error("Error creating destination:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 export const createDestinationBulk = async (req, res) => {
   try {
     const result = await createDestinationBulkService(req.body);
@@ -81,7 +97,7 @@ export const searchAndFilter = async (req, res) => {
       page,
       limit,
     } = req.query;
-    const results = await searchAndFilterDestinationsService({
+    const result = await searchAndFilterDestinationsService({
       search,
       category_id,
       place_type_id,
@@ -94,8 +110,17 @@ export const searchAndFilter = async (req, res) => {
       limit,
     });
 
-    const resultsWithUrl = addAbsoluteImageUrl(results, req);
-    res.json({ success: true, data: resultsWithUrl });
+    // Handle both old (array) and new (paged) return
+    const isPaged = result && typeof result === "object" && Array.isArray(result.data);
+    const rows = isPaged ? result.data : result;
+    const pagination = isPaged ? { total: result.total, page: result.page, limit: result.limit, totalPages: result.totalPages } : undefined;
+
+    const resultsWithUrl = addAbsoluteImageUrl(rows, req);
+    if (pagination) {
+      res.json({ success: true, data: resultsWithUrl, pagination });
+    } else {
+      res.json({ success: true, data: resultsWithUrl });
+    }
   } catch (error) {
     console.error("Error searching and filtering destinations:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
@@ -116,5 +141,43 @@ export const getSimilarDestinations = async (req, res) => {
   } catch (error) {
     console.error("Error fetching similar destinations:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const getDestinationByUuid = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const dest = await getDestinationByUuidService(uuid);
+    if (!dest) return res.status(404).json({ success: false, message: "Destination not found" });
+    const withUrl = addAbsoluteImageUrl([dest], req);
+    return res.json({ success: true, data: withUrl[0] });
+  } catch (error) {
+    console.error("Error fetching by uuid:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const updateDestination = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const updated = await updateDestinationService(uuid, req.body);
+    if (!updated) return res.status(404).json({ success: false, message: "Destination not found" });
+    const withUrl = addAbsoluteImageUrl([updated], req);
+    return res.json({ success: true, data: withUrl[0] });
+  } catch (error) {
+    console.error("Error updating:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const deleteDestination = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const ok = await deleteDestinationService(uuid);
+    if (!ok) return res.status(404).json({ success: false, message: "Destination not found" });
+    return res.json({ success: true, message: "Deleted" });
+  } catch (error) {
+    console.error("Error deleting:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

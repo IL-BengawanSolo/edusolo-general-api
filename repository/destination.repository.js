@@ -9,6 +9,7 @@ function getBaseSelect() {
       tp.slug,
       tp.name,
       tp.address,
+      tp.region_id,
       tp.latitude,
       tp.longitude,
       tp.description,
@@ -92,6 +93,12 @@ const Destination = {
     return rows[0] || null;
   },
 
+  async findByUuidFull(uuid) {
+    const sql = getBaseSelect() + " WHERE tp.uuid = ? GROUP BY tp.id";
+    const [rows] = await db.query(sql, [uuid]);
+    return rows[0] || null;
+  },
+
   async findBySlug(slug) {
     const sql = getBaseSelect() + " WHERE tp.slug = ? GROUP BY tp.id";
     const [rows] = await db.query(sql, [slug]);
@@ -100,9 +107,54 @@ const Destination = {
     return row;
   },
 
+  async updateByUuid(uuid, data) {
+    const allowed = ["name", "slug", "address", "region_id", "latitude", "longitude", "description", "ticket_price_info", "ticket_price_min", "ticket_price_max", "review_count", "average_rating", "website_url"];
+    const fields = [];
+    const vals = [];
+    for (const k of allowed) {
+      if (data[k] !== undefined) {
+        fields.push(`${k} = ?`);
+        vals.push(k === "ticket_price_info" ? JSON.stringify(data[k]) : data[k]);
+      }
+    }
+    if (!fields.length) return this.findByUuidFull(uuid);
+    vals.push(uuid);
+    await db.query(`UPDATE ${table} SET ${fields.join(", ")} WHERE uuid = ?`, vals);
+    return this.findByUuidFull(uuid);
+  },
+
+  async deleteByUuid(uuid) {
+    const [result] = await db.query(`DELETE FROM ${table} WHERE uuid = ?`, [uuid]);
+    return result.affectedRows > 0;
+  },
+
+  async create(data) {
+    const [result] = await db.query(
+      `INSERT INTO ${table}
+      (uuid, slug, name, address, region_id, latitude, longitude, description, ticket_price_info, ticket_price_min, ticket_price_max, review_count, average_rating, website_url)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        data.uuid,
+        data.slug,
+        data.name,
+        data.address,
+        data.region_id,
+        data.latitude,
+        data.longitude,
+        data.description,
+        JSON.stringify(data.ticket_price_info || null),
+        data.ticket_price_min ?? null,
+        data.ticket_price_max ?? null,
+        data.review_count || 0,
+        data.average_rating || 0,
+        data.website_url || null,
+      ]
+    );
+    return { id: result.insertId, uuid: data.uuid, slug: data.slug };
+  },
+
   async createBulk(destinations) {
     if (!Array.isArray(destinations) || destinations.length === 0) return [];
-    // activities/facilities are junction tables, not columns in tourist_places (ddl.sql)
     const values = destinations.map((data) => [
       data.uuid,
       data.slug,
@@ -273,6 +325,18 @@ const Destination = {
       case "review-count":
         orderBy = " ORDER BY tp.review_count DESC";
         break;
+      case "name-asc":
+        orderBy = " ORDER BY tp.name ASC";
+        break;
+      case "name-desc":
+        orderBy = " ORDER BY tp.name DESC";
+        break;
+      case "newest":
+        orderBy = " ORDER BY tp.id DESC";
+        break;
+      case "oldest":
+        orderBy = " ORDER BY tp.id ASC";
+        break;
       default:
         orderBy = "";
     }
@@ -280,11 +344,69 @@ const Destination = {
     const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 1000);
     const safePage = Math.max(parseInt(page, 10) || 1, 1);
     const offset = (safePage - 1) * safeLimit;
+
+    // Count total for pagination
+    let countSql = "SELECT COUNT(DISTINCT tp.id) as total FROM tourist_places tp WHERE 1=1";
+    const countParams = [];
+    // Rebuild count where clauses (same as above, without GROUP BY/ORDER)
+    if (search) {
+      const safeSearch2 = String(search).slice(0, 100).replace(/[%_]/g, "\\$&");
+      countSql += " AND tp.name LIKE ? ESCAPE '\\\\'";
+      countParams.push(`%${safeSearch2}%`);
+    }
+    if (region_id && Array.isArray(region_id) && region_id.length > 0) {
+      const placeholders = region_id.map(() => "?").join(",");
+      countSql += ` AND tp.region_id IN (${placeholders})`;
+      countParams.push(...region_id);
+    } else if (region_id) {
+      countSql += " AND tp.region_id = ?";
+      countParams.push(region_id);
+    }
+    if (category_id && Array.isArray(category_id) && category_id.length > 0) {
+      const placeholders = category_id.map(() => "?").join(",");
+      countSql += ` AND EXISTS (SELECT 1 FROM tourist_place_categories tpc WHERE tpc.place_id = tp.id AND tpc.category_id IN (${placeholders}))`;
+      countParams.push(...category_id);
+    } else if (category_id) {
+      countSql += ` AND EXISTS (SELECT 1 FROM tourist_place_categories tpc WHERE tpc.place_id = tp.id AND tpc.category_id = ?)`;
+      countParams.push(category_id);
+    }
+    if (place_type_id && Array.isArray(place_type_id) && place_type_id.length > 0) {
+      const placeholders = place_type_id.map(() => "?").join(",");
+      countSql += ` AND EXISTS (SELECT 1 FROM tourist_place_types tpt WHERE tpt.place_id = tp.id AND tpt.place_type_id IN (${placeholders}))`;
+      countParams.push(...place_type_id);
+    } else if (place_type_id) {
+      countSql += ` AND EXISTS (SELECT 1 FROM tourist_place_types tpt WHERE tpt.place_id = tp.id AND tpt.place_type_id = ?)`;
+      countParams.push(place_type_id);
+    }
+    if (open_days && Array.isArray(open_days) && open_days.length > 0) {
+      const placeholders = open_days.map(() => "?").join(",");
+      countSql += ` AND EXISTS (SELECT 1 FROM opening_hours oh WHERE oh.place_id = tp.id AND oh.day_of_week IN (${placeholders}) AND oh.is_closed = 0)`;
+      countParams.push(...open_days);
+    } else if (open_days) {
+      countSql += ` AND EXISTS (SELECT 1 FROM opening_hours oh WHERE oh.place_id = tp.id AND oh.day_of_week = ? AND oh.is_closed = 0)`;
+      countParams.push(open_days);
+    }
+    if (age_category_id) {
+      countSql += ` AND EXISTS (SELECT 1 FROM tourist_place_age_categories tpac WHERE tpac.place_id = tp.id AND tpac.age_category_id = ?)`;
+      countParams.push(age_category_id);
+    }
+    if (price_range) {
+      switch (price_range) {
+        case "free": countSql += " AND (tp.ticket_price_min = 0 OR tp.ticket_price_min IS NULL)"; break;
+        case "lt-10k": countSql += " AND tp.ticket_price_min > 0 AND tp.ticket_price_min < 10000"; break;
+        case "10-30": countSql += " AND tp.ticket_price_min >= 10000 AND tp.ticket_price_min <= 30000"; break;
+        case "30-100": countSql += " AND tp.ticket_price_min > 30000 AND tp.ticket_price_min <= 100000"; break;
+        case "gt-100k": countSql += " AND tp.ticket_price_min > 100000"; break;
+      }
+    }
+    const [countRows] = await db.query(countSql, countParams);
+    const total = countRows[0]?.total || 0;
+
     sql += " GROUP BY tp.id" + orderBy + ` LIMIT ? OFFSET ?`;
     params.push(safeLimit, offset);
 
     const [rows] = await db.query(sql, params);
-    return rows;
+    return { rows, total, page: safePage, limit: safeLimit, totalPages: Math.ceil(total / safeLimit) };
   },
 
   // ---------------------------------------------------------------

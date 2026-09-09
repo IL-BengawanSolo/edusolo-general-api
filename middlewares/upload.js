@@ -3,7 +3,9 @@ import path from "path";
 import fs from "fs";
 import slugify from "slugify";
 
-const uploadDir = path.join(process.cwd(), "uploads/images");
+const uploadDir = process.env.VERCEL
+  ? path.join("/tmp", "uploads/images")
+  : path.join(process.cwd(), "uploads/images");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 const allowedMime = new Set(["image/jpeg", "image/png", "image/webp", "image/jpg"]);

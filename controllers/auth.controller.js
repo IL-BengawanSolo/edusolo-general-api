@@ -29,6 +29,7 @@ export const login = (req, res, next) => {
             email: user.email,
             first_name: user.first_name,
             last_name: user.last_name,
+            role: user.role,
           },
         },
       });
@@ -49,6 +50,7 @@ export const me = (req, res, next) => {
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
+        role: user.role,
       },
     });
   })(req, res, next);

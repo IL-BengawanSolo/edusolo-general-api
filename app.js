@@ -44,6 +44,10 @@ app.use(cookieParser());
 app.use(passport.initialize());
 
 
+const staticUploadDir = process.env.VERCEL
+  ? path.join("/tmp", "uploads")
+  : path.join(process.cwd(), "uploads");
+
 app.use(
   "/uploads",
   (req, res, next) => {
@@ -51,6 +55,7 @@ app.use(
     res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
     next();
   },
+  express.static(staticUploadDir),
   express.static(path.join(process.cwd(), "uploads")),
 );
 

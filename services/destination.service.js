@@ -64,6 +64,16 @@ export const getAllDestinations = async ({ page = 1, limit = 20 } = {}) => {
   }));
 };
 
+export const createDestination = async (data) => {
+  if (!data.name) throw new Error("name is required");
+  const uuid = uuidv4();
+  const baseSlug = slugify(data.name, { lower: true, strict: true });
+  const slug = `${baseSlug}-${uuid.slice(0, 6)}`;
+  const payload = { ...data, uuid, slug };
+  const result = await DestinationRepository.create(payload);
+  return result;
+};
+
 export const createDestinationBulk = async (dataArray) => {
   const destinations = dataArray.map((data) => {
     const uuid = uuidv4();
@@ -75,8 +85,10 @@ export const createDestinationBulk = async (dataArray) => {
 };
 
 export const searchAndFilterDestinations = async (params) => {
-  const rows = await DestinationRepository.searchAndFilter(params);
-  return rows.map((row) => ({
+  const result = await DestinationRepository.searchAndFilter(params);
+  const isPaged = result && typeof result === "object" && Array.isArray(result.rows);
+  const rows = isPaged ? result.rows : result;
+  const mapped = rows.map((row) => ({
     ...row,
     place_types: splitCommaString(row.place_types),
     categories: splitCommaString(row.categories),
@@ -84,6 +96,10 @@ export const searchAndFilterDestinations = async (params) => {
     activities: splitCommaString(row.activities),
     facilities: splitCommaString(row.facilities),
   }));
+  if (isPaged) {
+    return { data: mapped, total: result.total, page: result.page, limit: result.limit, totalPages: result.totalPages };
+  }
+  return mapped;
 };
 
 export const getSimilarDestinations = async (slug, limit = 10) => {
@@ -97,6 +113,48 @@ export const getSimilarDestinations = async (slug, limit = 10) => {
     facilities: splitCommaString(row.facilities),
     opening_hours: row.opening_hours ? preprocessOpeningHours(row.opening_hours) : [],
   }));
+};
+
+export const getDestinationByUuid = async (uuid) => {
+  const row = await DestinationRepository.findByUuidFull(uuid);
+  if (!row) return null;
+  return {
+    ...row,
+    place_types: splitCommaString(row.place_types),
+    categories: splitCommaString(row.categories),
+    age_categories: splitCommaString(row.age_categories),
+    activities: splitCommaString(row.activities),
+    facilities: splitCommaString(row.facilities),
+    opening_hours: preprocessOpeningHours(row.opening_hours),
+  };
+};
+
+export const updateDestination = async (uuid, data) => {
+  const existing = await DestinationRepository.findByUuidFull(uuid);
+  if (!existing) return null;
+  if (data.name && data.name !== existing.name) {
+    const baseSlug = slugify(data.name, { lower: true, strict: true });
+    data.slug = `${baseSlug}-${uuid.slice(0, 6)}`;
+  }
+  return await DestinationRepository.updateByUuid(uuid, data);
+};
+
+export const deleteDestination = async (uuid) => {
+  const existing = await DestinationRepository.findByUuidFull(uuid);
+  if (!existing) return false;
+  const { default: PlaceImageRepository } = await import("../repository/place_image.repository.js");
+  const images = await PlaceImageRepository.findByPlaceId(existing.id);
+  const fs = await import("fs");
+  const path = await import("path");
+  for (const img of images) {
+    for (const base of [process.cwd(), "/tmp"]) {
+      try {
+        const p = path.join(base, img.image_url.replace(/^\//, ""));
+        if (fs.existsSync(p)) fs.unlinkSync(p);
+      } catch {}
+    }
+  }
+  return await DestinationRepository.deleteByUuid(uuid);
 };
 
 

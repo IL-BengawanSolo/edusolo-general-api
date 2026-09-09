@@ -9,10 +9,12 @@ CREATE TABLE
     `password_hash` VARCHAR(255) NOT NULL,
     `phone` VARCHAR(16) NULL,
     `dob` DATE NULL,
+    `role` ENUM('user','admin') NOT NULL DEFAULT 'user',
     `is_active` BOOLEAN DEFAULT TRUE,
     `last_login_at` DATETIME NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_users_role` (`role`)
   );
 
 CREATE TABLE

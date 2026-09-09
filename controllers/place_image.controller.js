@@ -1,6 +1,8 @@
 import {
   uploadImage,
   getImagesByPlaceId,
+  deleteImage,
+  setPrimaryImage as setPrimaryImageService,
 } from "../services/place_image.service.js";
 
 export const uploadPlaceImage = async (req, res) => {
@@ -92,6 +94,32 @@ export const uploadPlaceImagesBulk = async (req, res) => {
     });
   } catch (error) {
     console.error("Error uploading images:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const deletePlaceImage = async (req, res) => {
+  try {
+    const placeId = req.placeId;
+    const { imageId } = req.params;
+    const ok = await deleteImage(placeId, Number(imageId));
+    if (!ok) return res.status(404).json({ success: false, message: "Image not found" });
+    res.json({ success: true, message: "Deleted" });
+  } catch (error) {
+    console.error("Error deleting image:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const setPrimaryImage = async (req, res) => {
+  try {
+    const placeId = req.placeId;
+    const { imageId } = req.params;
+    const ok = await setPrimaryImageService(placeId, Number(imageId));
+    if (!ok) return res.status(404).json({ success: false, message: "Image not found" });
+    res.json({ success: true, message: "Primary updated" });
+  } catch (error) {
+    console.error("Error set primary:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

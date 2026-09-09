@@ -22,7 +22,7 @@ export const searchQuerySchema = z.object({
   open_days: z.union([z.string(), z.array(z.string())]).optional(),
   age_category_id: z.string().optional(),
   price_range: z.enum(["free", "lt-10k", "10-30", "30-100", "gt-100k"]).optional(),
-  sort_by: z.enum(["highest-price", "lowest-price", "highest-rating", "review-count"]).optional(),
+  sort_by: z.enum(["highest-price", "lowest-price", "highest-rating", "review-count", "name-asc", "name-desc", "newest", "oldest"]).optional(),
   page: z.coerce.number().int().min(1).default(1).optional(),
   limit: z.coerce.number().int().min(1).max(1000).default(10).optional(),
 });
@@ -63,3 +63,35 @@ export const chatbotSchema = z.object({
   ).min(1).max(20),
   message: z.string().trim().max(2000).optional(),
 }).refine((d) => d.messages || d.message, { message: "messages or message required" });
+
+export const singleDestinationSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  address: z.string().trim().max(1000).optional().nullable(),
+  region_id: z.coerce.number().int().positive().optional().nullable(),
+  latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
+  longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
+  description: z.string().trim().max(5000).optional().nullable(),
+  ticket_price_min: z.coerce.number().min(0).max(100000000).optional().nullable(),
+  ticket_price_max: z.coerce.number().min(0).max(100000000).optional().nullable(),
+  ticket_price_info: z.any().optional().nullable(),
+  website_url: z.string().trim().url().max(2048).optional().nullable().or(z.literal("")),
+  review_count: z.coerce.number().int().min(0).optional().nullable(),
+  average_rating: z.coerce.number().min(0).max(5).optional().nullable(),
+});
+
+export const updateDestinationSchema = singleDestinationSchema.partial().refine(
+  (d) => {
+    if (d.ticket_price_min != null && d.ticket_price_max != null && d.ticket_price_min !== "" && d.ticket_price_max !== "" ) {
+      const min = Number(d.ticket_price_min);
+      const max = Number(d.ticket_price_max);
+      if (!Number.isNaN(min) && !Number.isNaN(max)) return max >= min;
+    }
+    return true;
+  },
+  { message: "ticket_price_max must be >= min", path: ["ticket_price_max"] }
+);
+
+export const imageIdParamSchema = z.object({
+  uuid: z.string().uuid(),
+  imageId: z.coerce.number().int().positive(),
+});

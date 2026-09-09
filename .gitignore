@@ -57,6 +57,10 @@ typings/
 # dotenv environment variables file
 .env
 .env.*.local
+.env.local
+.env.vercel
 
 # next.js build output
 .next
+
+uploads/
