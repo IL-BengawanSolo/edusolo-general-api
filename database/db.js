@@ -30,6 +30,8 @@ const pool = mysql.createPool(poolConfig);
 
 pool.on("connection", (conn) => {
   conn.query("SET time_zone = '+07:00'");
+  // Disable ONLY_FULL_GROUP_BY for getBaseSelect GROUP BY tp.id compatibility (TiDB/MySQL 8)
+  conn.query("SET SESSION sql_mode = (SELECT REPLACE(@@sql_mode, 'ONLY_FULL_GROUP_BY', ''))");
 });
 
 pool.on("error", (err) => {
