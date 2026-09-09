@@ -20,7 +20,7 @@ REST API for EduSolo - educational tourism platform for Solo Raya. Handles desti
 | Layer | Technologies |
 |---|---|
 | **Runtime** | Node 20, Express 4, ES Modules |
-| **Database** | MySQL 8, `mysql2/promise` (pool, `utf8mb4`), `Dump20250709.sql` (full dump) + `migrate_add_role.js` |
+| **Database** | TiDB Cloud (MySQL compatible) / MySQL 8, `mysql2/promise` (pool, `utf8mb4`, `DATABASE_URL` for TiDB), `Dump20250709.sql` + `migrate_add_role.js` |
 | **Auth** | `passport` (local + JWT), `jsonwebtoken`, `bcryptjs` |
 | **Validation** | `zod` |
 | **Upload** | `multer` |
@@ -61,16 +61,17 @@ ALLOWED_ORIGINS=http://localhost:5173,https://edusolo-fe.vercel.app
 BASE_URL=http://localhost:5500
 ```
 
-**Setup DB (gunakan dump lengkap):**
+**Setup DB (TiDB Cloud / MySQL — gunakan dump lengkap):**
 
 ```bash
-# Buat database kosong terlebih dahulu
+# TiDB Cloud: buat cluster di tidbcloud.com → Connect → mysql://... → set DATABASE_URL di .env.development.local
+# Atau lokal MySQL:
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS edusolo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-# Import dump lengkap (sudah termasuk schema + data destinasi, region, kategori, dll. — ddl.sql/dml.sql deprecated)
 mysql -u root -p edusolo < database/Dump20250709.sql
+# Jika pakai TiDB Cloud:
+# mysql --host=gateway01.us-west-2.prod.aws.tidbcloud.com --port=4000 -u <user> -p edusolo < database/Dump20250709.sql
 
-# Tambah kolom role + seed admin (jika dump belum ada role)
+# Tambah role + seed admin (jika dump belum ada role)
 node database/migrate_add_role.js  # creates admin@edusolo.local / Admin123!
 ```
 
@@ -79,9 +80,13 @@ node database/migrate_add_role.js  # creates admin@edusolo.local / Admin123!
 | Variable | Required | Notes |
 |---|---|---|
 | `PORT` | No | Default `5500` |
-| `MYSQL_HOST/PORT/USER/PASSWORD/DATABASE` | Yes | |
+| `MYSQL_HOST/PORT/USER/PASSWORD/DATABASE` | Yes (if no `DATABASE_URL`) | Local MySQL |
+| `DATABASE_URL` | Yes (TiDB Cloud, alternative) | `mysql://user:pass@gateway01...:4000/edusolo?sslMode=VERIFY_IDENTITY` |
 | `JWT_SECRET` | Yes | `crypto.randomBytes(32).toString('base64')` |
+| `JWT_EXPIRES_IN` | No | Default `1d` |
 | `GROQ_API_KEY` | For chatbot | `gsk_...` |
+| `ALLOWED_ORIGINS` | No | Default `localhost:5173,3000` + vercel FE |
+| `BASE_URL` | No | For absolute `image_url` |
 
 ## Project Structure
 
