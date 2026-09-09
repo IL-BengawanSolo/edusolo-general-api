@@ -1,6 +1,10 @@
 export function addAbsoluteImageUrl(data, req, field = "thumbnail_url") {
-  // Prefer explicit BASE_URL to avoid Host header poison; fallback to req host
-  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
+  // Prefer BASE_URL, else use forwarded proto/host to force https behind Vercel proxy (fixes Mixed Content)
+  const proto = req.headers["x-forwarded-proto"] || req.protocol;
+  const host = req.get("host");
+  const isVercel = host && host.includes("vercel.app");
+  const baseProto = isVercel ? "https" : proto;
+  const baseUrl = process.env.BASE_URL || `${baseProto}://${host}`;
   if (Array.isArray(data)) {
     return data.map(row => ({
       ...row,

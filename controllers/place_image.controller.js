@@ -45,8 +45,10 @@ export const getPlaceImages = async (req, res) => {
     const placeId = req.placeId;
     const images = await getImagesByPlaceId(placeId);
 
-    // Ambil base URL dari request
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const proto = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.get("host");
+    const isVercel = host && host.includes("vercel.app");
+    const baseUrl = process.env.BASE_URL || `${isVercel ? "https" : proto}://${host}`;
 
     // Ubah image_url menjadi absolute URL
     const imagesWithFullUrl = images.map((img) => ({
