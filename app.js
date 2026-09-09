@@ -14,7 +14,10 @@ import morgan from "morgan";
 import compression from "compression";
 import path from "path";
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173,http://localhost:3000,https://edusolo-fe.vercel.app")
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS ||
+  "http://localhost:5173,http://localhost:3000,https://edusolo-fe.vercel.app,https://edusolo.vercel.app,https://edusolo-fe-git-main-boyaditya.vercel.app"
+)
   .split(",")
   .map((o) => o.trim());
 
