@@ -67,33 +67,39 @@ CREATE TABLE
     `id` INT PRIMARY KEY AUTO_INCREMENT,
     `uuid` CHAR(36) UNIQUE NOT NULL,
     `slug` VARCHAR(255) UNIQUE NOT NULL,
-    `name` TEXT NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
     `address` TEXT,
     `region_id` INT,
-    `latitude` FLOAT NULL,
-    `longitude` FLOAT NULL,
+    `latitude` DECIMAL(10, 8) NULL,
+    `longitude` DECIMAL(11, 8) NULL,
     `description` TEXT,
     `ticket_price_info` JSON NULL,
     `ticket_price_min` DECIMAL(15, 2),
     `ticket_price_max` DECIMAL(15, 2),
     `review_count` INT DEFAULT 0,
     `average_rating` FLOAT DEFAULT 0,
-    `website_url` TEXT NULL,
+    `website_url` VARCHAR(2048) NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`region_id`) REFERENCES `regions` (`id`) ON DELETE SET NULL
-  );
+    FOREIGN KEY (`region_id`) REFERENCES `regions` (`id`) ON DELETE SET NULL,
+    INDEX `idx_tp_region` (`region_id`),
+    INDEX `idx_tp_price_min` (`ticket_price_min`),
+    INDEX `idx_tp_rating` (`average_rating`),
+    INDEX `idx_tp_review` (`review_count`),
+    FULLTEXT `ft_tp_name_desc` (`name`, `description`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 3. Tabel Anak dan Tabel Junction (Many-to-Many)
 CREATE TABLE
   `opening_hours` (
     `id` INT PRIMARY KEY AUTO_INCREMENT,
     `place_id` INT NOT NULL,
-    `day_of_week` INT NOT NULL COMMENT '1=Senin, 7=Minggu',
+    `day_of_week` INT NOT NULL COMMENT '1=Senin, 7=Minggu' CHECK (`day_of_week` BETWEEN 1 AND 7),
     `open_time` TIME NULL,
     `close_time` TIME NULL,
     `is_closed` BOOLEAN NOT NULL,
-    FOREIGN KEY (`place_id`) REFERENCES `tourist_places` (`id`) ON DELETE CASCADE
+    FOREIGN KEY (`place_id`) REFERENCES `tourist_places` (`id`) ON DELETE CASCADE,
+    INDEX `idx_oh_place_day_closed` (`place_id`, `day_of_week`, `is_closed`)
   );
 
 CREATE TABLE
@@ -103,7 +109,8 @@ CREATE TABLE
     `image_url` TEXT NOT NULL,
     `is_primary` BOOLEAN DEFAULT FALSE,
     `uploaded_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`place_id`) REFERENCES `tourist_places` (`id`) ON DELETE CASCADE
+    FOREIGN KEY (`place_id`) REFERENCES `tourist_places` (`id`) ON DELETE CASCADE,
+    INDEX `idx_pi_place_primary` (`place_id`, `is_primary`)
   );
 
 CREATE TABLE
@@ -112,7 +119,8 @@ CREATE TABLE
     `place_type_id` INT NOT NULL,
     PRIMARY KEY (`place_id`, `place_type_id`),
     FOREIGN KEY (`place_id`) REFERENCES `tourist_places` (`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`place_type_id`) REFERENCES `place_types` (`id`) ON DELETE CASCADE
+    FOREIGN KEY (`place_type_id`) REFERENCES `place_types` (`id`) ON DELETE CASCADE,
+    INDEX `idx_tpt_type_place` (`place_type_id`, `place_id`)
   );
 
 CREATE TABLE
@@ -121,7 +129,8 @@ CREATE TABLE
     `category_id` INT NOT NULL,
     PRIMARY KEY (`place_id`, `category_id`),
     FOREIGN KEY (`place_id`) REFERENCES `tourist_places` (`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE
+    FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE,
+    INDEX `idx_tpc_cat_place` (`category_id`, `place_id`)
   );
 
 CREATE TABLE
@@ -130,7 +139,8 @@ CREATE TABLE
     `age_category_id` INT NOT NULL,
     PRIMARY KEY (`place_id`, `age_category_id`),
     FOREIGN KEY (`place_id`) REFERENCES `tourist_places` (`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`age_category_id`) REFERENCES `age_categories` (`id`) ON DELETE CASCADE
+    FOREIGN KEY (`age_category_id`) REFERENCES `age_categories` (`id`) ON DELETE CASCADE,
+    INDEX `idx_tpac_age_place` (`age_category_id`, `place_id`)
   );
 
 CREATE TABLE
@@ -157,7 +167,8 @@ CREATE TABLE
     `id` INT PRIMARY KEY AUTO_INCREMENT,
     `user_id` INT NOT NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    INDEX `idx_rs_user_created` (`user_id`, `created_at` DESC)
   );
 
 CREATE TABLE
@@ -179,5 +190,6 @@ CREATE TABLE
     `score` FLOAT,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`session_id`) REFERENCES `recommendation_sessions` (`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`place_id`) REFERENCES `tourist_places` (`id`) ON DELETE CASCADE
+    FOREIGN KEY (`place_id`) REFERENCES `tourist_places` (`id`) ON DELETE CASCADE,
+    INDEX `idx_rr_session_score` (`session_id`, `score` DESC)
   );

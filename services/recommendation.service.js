@@ -1,17 +1,7 @@
 import UserRepository from "../repository/user.repository.js";
 import RecommendationSessionRepository from "../repository/recommendation_session.repository.js";
 import RecommendationResultRepository from "../repository/recommendation_result.repository.js";
-
-function splitCommaString(str) {
-  if (Array.isArray(str)) return str;
-  if (typeof str === "string") {
-    return str
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
-  return [];
-}
+import { splitCommaString } from "../utils/string.js";
 
 export const hasUserRecommendationSession = async (userId) => {
   return await UserRepository.hasRecommendationSession(userId);

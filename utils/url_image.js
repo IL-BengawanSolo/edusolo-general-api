@@ -1,5 +1,6 @@
 export function addAbsoluteImageUrl(data, req, field = "thumbnail_url") {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  // Prefer explicit BASE_URL to avoid Host header poison; fallback to req host
+  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
   if (Array.isArray(data)) {
     return data.map(row => ({
       ...row,

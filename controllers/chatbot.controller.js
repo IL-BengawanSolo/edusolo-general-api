@@ -56,9 +56,18 @@ export const chatWithGroq = async (req, res) => {
     `,
     };
 
-    // Gabungkan system prompt dengan messages user
-    const fullMessages = [systemPrompt, ...messages];
+    // Sanitize: only allow user/assistant roles, strip system, cap length
+    const sanitized = messages
+      .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+      .slice(-20)
+      .map((m) => ({ role: m.role, content: String(m.content).slice(0, 2000) }));
+    if (!sanitized.length) {
+      return res.status(400).json({ success: false, message: "No valid messages" });
+    }
+    const fullMessages = [systemPrompt, ...sanitized];
 
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 10000);
     const groqRes = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -69,10 +78,12 @@ export const chatWithGroq = async (req, res) => {
         },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
-          messages: fullMessages, // kirim seluruh history + system prompt
+          messages: fullMessages,
         }),
+        signal: ctrl.signal,
       }
     );
+    clearTimeout(timeout);
 
     if (!groqRes.ok) {
       return res

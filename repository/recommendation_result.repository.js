@@ -11,6 +11,15 @@ const RecommendationResultRepository = {
     return { id: result.insertId, session_id, place_id, score };
   },
 
+  async createBulk(rows) {
+    if (!rows.length) return [];
+    const values = rows.map((r) => [r.session_id, r.place_id, r.score]);
+    const placeholders = values.map(() => "(?, ?, ?)").join(", ");
+    const flat = values.flat();
+    const [result] = await db.query(`INSERT INTO ${table} (session_id, place_id, score) VALUES ${placeholders}`, flat);
+    return result;
+  },
+
   async findDestinationsBySessionId(session_id) {
     const [rows] = await db.query(
       `SELECT 

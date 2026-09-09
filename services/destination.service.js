@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import slugify from "slugify";
 import DestinationRepository from "../repository/destination.repository.js";
+import { splitCommaString } from "../utils/string.js";
 
 const DAY_MAP = {
   1: "Senin",
@@ -34,16 +35,7 @@ function preprocessOpeningHours(opening_hours) {
   }));
 }
 
-function splitCommaString(str) {
-  if (Array.isArray(str)) return str;
-  if (typeof str === "string") {
-    return str
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
-  return [];
-}
+
 
 
 export const getDestinationBySlug = async (slug) => {
@@ -60,8 +52,8 @@ export const getDestinationBySlug = async (slug) => {
   };
 };
 
-export const getAllDestinations = async () => {
-  const rows = await DestinationRepository.findAll();
+export const getAllDestinations = async ({ page = 1, limit = 20 } = {}) => {
+  const rows = await DestinationRepository.findAll({ page, limit });
   return rows.map((row) => ({
     ...row,
     place_types: splitCommaString(row.place_types),

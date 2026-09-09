@@ -11,6 +11,11 @@ const RecommendationSessionRepository = {
     return { id: result.insertId, user_id };
   },
 
+  async findById(id) {
+    const [rows] = await db.query(`SELECT * FROM ${table} WHERE id = ?`, [id]);
+    return rows[0] || null;
+  },
+
   async findLastByUserId(user_id) {
     const [rows] = await db.query(
       `SELECT * FROM ${table} WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`,

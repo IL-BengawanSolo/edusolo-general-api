@@ -75,9 +75,12 @@ function getBaseSelect() {
 }
 
 const Destination = {
-  async findAll() {
-    const sql = getBaseSelect() + " GROUP BY tp.id";
-    const [rows] = await db.query(sql);
+  async findAll({ page = 1, limit = 20 } = {}) {
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 50);
+    const safePage = Math.max(parseInt(page, 10) || 1, 1);
+    const offset = (safePage - 1) * safeLimit;
+    const sql = getBaseSelect() + " GROUP BY tp.id LIMIT ? OFFSET ?";
+    const [rows] = await db.query(sql, [safeLimit, offset]);
     return rows;
   },
 
@@ -99,7 +102,7 @@ const Destination = {
 
   async createBulk(destinations) {
     if (!Array.isArray(destinations) || destinations.length === 0) return [];
-
+    // activities/facilities are junction tables, not columns in tourist_places (ddl.sql)
     const values = destinations.map((data) => [
       data.uuid,
       data.slug,
@@ -109,19 +112,17 @@ const Destination = {
       data.latitude,
       data.longitude,
       data.description,
-      JSON.stringify(data.ticket_price_info),
-      data.ticket_price_min,
-      data.ticket_price_max,
-      data.activities,
-      data.facilities,
+      JSON.stringify(data.ticket_price_info || null),
+      data.ticket_price_min ?? null,
+      data.ticket_price_max ?? null,
       data.review_count || 0,
       data.average_rating || 0,
-      data.website_url,
+      data.website_url || null,
     ]);
 
     const [result] = await db.query(
-      `INSERT INTO ${table} 
-      (uuid, slug, name, address, region_id, latitude, longitude, description, ticket_price_info, ticket_price_min, ticket_price_max, activities, facilities, review_count, average_rating, website_url)
+      `INSERT INTO ${table}
+      (uuid, slug, name, address, region_id, latitude, longitude, description, ticket_price_info, ticket_price_min, ticket_price_max, review_count, average_rating, website_url)
       VALUES ?`,
       [values]
     );
@@ -143,10 +144,10 @@ const Destination = {
     let sql = getBaseSelect() + " WHERE 1=1\n";
     const params = [];
 
-    // Filter logic tetap sama seperti sebelumnya
     if (search) {
-      sql += " AND tp.name LIKE ?";
-      params.push(`%${search}%`);
+      const safeSearch = String(search).slice(0, 100).replace(/[%_]/g, "\\$&");
+      sql += " AND tp.name LIKE ? ESCAPE '\\\\'";
+      params.push(`%${safeSearch}%`);
     }
 
     if (region_id && Array.isArray(region_id) && region_id.length > 0) {
@@ -276,10 +277,11 @@ const Destination = {
         orderBy = "";
     }
 
-    // Tambahkan pagination dengan LIMIT dan OFFSET
-    const offset = (page - 1) * limit;
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 1000);
+    const safePage = Math.max(parseInt(page, 10) || 1, 1);
+    const offset = (safePage - 1) * safeLimit;
     sql += " GROUP BY tp.id" + orderBy + ` LIMIT ? OFFSET ?`;
-    params.push(parseInt(limit, 10), parseInt(offset, 10));
+    params.push(safeLimit, offset);
 
     const [rows] = await db.query(sql, params);
     return rows;
@@ -343,8 +345,9 @@ const Destination = {
       params.push(...placeTypeIds);
     }
 
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 20);
     sql += " GROUP BY tp.id LIMIT ?";
-    params.push(limit);
+    params.push(safeLimit);
 
     const [rows] = await db.query(sql, params);
     return rows;

@@ -35,21 +35,32 @@ export const postRecommendationSession = async (req, res) => {
 
 export const getAIRecommendations = async (req, res) => {
   try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
     const { preferred_categories, n, session_id } = req.body;
     if (!session_id) {
       return res
         .status(400)
         .json({ success: false, message: "Missing session_id" });
     }
+    const session = await RecommendationSessionRepository.findById(session_id);
+    if (!session) return res.status(404).json({ success: false, message: "Session not found" });
+    if (String(session.user_id) !== String(userId)) {
+      return res.status(403).json({ success: false, message: "Forbidden: session does not belong to user" });
+    }
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     const response = await fetch(
       "https://farrah29-tourism-recommendation-api.hf.space/recommendations",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferred_categories, n }),
+        body: JSON.stringify({ preferred_categories, n: Math.min(Math.max(parseInt(n, 10) || 8, 1), 20) }),
+        signal: controller.signal,
       }
     );
+    clearTimeout(timeout);
     if (!response.ok) {
       return res
         .status(502)
@@ -57,19 +68,33 @@ export const getAIRecommendations = async (req, res) => {
     }
     const data = await response.json();
 
-    // Simpan hasil rekomendasi ke recommendation_results
-    const savedResults = [];
+    // Bulk insert with validation and transaction
+    let savedResults = [];
     if (Array.isArray(data.recommendations)) {
+      const rows = [];
       for (const rec of data.recommendations) {
         const place_id_str = rec["ID Tempat"];
-        const place_id = parseInt(place_id_str.replace(/^T/, ""), 10);
-        const score = rec["final_score %"];
-        const result = await createRecommendationResult({
-          session_id,
-          place_id,
-          score,
-        });
-        savedResults.push(result);
+        const place_id = parseInt(String(place_id_str).replace(/^T/, ""), 10);
+        const score = Number(rec["final_score %"]);
+        if (!Number.isInteger(place_id) || Number.isNaN(score)) continue;
+        rows.push({ session_id, place_id, score });
+      }
+      if (rows.length) {
+        const db = (await import("../database/db.js")).default;
+        const conn = await db.getConnection();
+        try {
+          await conn.beginTransaction();
+          const placeholders = rows.map(() => "(?, ?, ?)").join(", ");
+          const flat = rows.flatMap((r) => [r.session_id, r.place_id, r.score]);
+          await conn.query(`INSERT INTO recommendation_results (session_id, place_id, score) VALUES ${placeholders}`, flat);
+          await conn.commit();
+          savedResults = rows;
+        } catch (e) {
+          await conn.rollback();
+          throw e;
+        } finally {
+          conn.release();
+        }
       }
     }
 
@@ -82,9 +107,15 @@ export const getAIRecommendations = async (req, res) => {
 
 export const getDestinationsFromRecommendationResult = async (req, res) => {
   try {
+    const userId = req.user?.id;
     const { session_id } = req.params;
     if (!session_id) {
       return res.status(400).json({ success: false, message: "Missing session_id" });
+    }
+    const session = await RecommendationSessionRepository.findById(session_id);
+    if (!session) return res.status(404).json({ success: false, message: "Session not found" });
+    if (String(session.user_id) !== String(userId)) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
     }
     const destinations = await getDestinationsByRecommendationSession(session_id);
         const destinationsWithUrl = addAbsoluteImageUrl(destinations, req);

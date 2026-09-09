@@ -34,7 +34,9 @@ export const getDestinationBySlug = async (req, res) => {
 
 export const getAllDestinations = async (req, res) => {
   try {
-    const destinations = await getAllDestinationsService();
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 50);
+    const destinations = await getAllDestinationsService({ page, limit });
     const destinationsWithUrl = addAbsoluteImageUrl(destinations, req);
     return res.status(200).json({
       success: true,
